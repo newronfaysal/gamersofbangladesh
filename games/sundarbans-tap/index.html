@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Sundarbans Tap — Gamers of Bangladesh</title>
+  <meta name="description" content="Tap the tigers, avoid the crocodiles. A free 30-second reflex game.">
+  <meta name="theme-color" content="#0b0f0d">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <style>
+    .field {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 22px 18px 26px;
+      background: radial-gradient(circle at 50% 30%, #1d4a33, #10261b);
+    }
+    .hole {
+      position: relative; aspect-ratio: 1; border: 0; padding: 0; border-radius: 16px; cursor: pointer;
+      background: transparent; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .hole:focus-visible { outline: 2px solid var(--yellow); }
+    .hole::before { /* muddy burrow opening */
+      content: ''; position: absolute; left: 6%; right: 6%; bottom: 10%; height: 32%; border-radius: 50%;
+      background: radial-gradient(ellipse at 50% 45%, #120c06 0 52%, #4a331b 54% 70%, #2e5a3a 72%);
+      box-shadow: 0 6px 0 #173523;
+    }
+    .pit { /* clips the animal at the middle of the opening so it rises out of the hole */
+      position: absolute; left: 0; right: 0; top: 0; bottom: 26%; overflow: hidden; pointer-events: none;
+    }
+    .critter {
+      position: absolute; left: 0; right: 0; bottom: 0; text-align: center;
+      font-size: clamp(36px, 12vw, 58px); line-height: 1.1;
+      transform: translateY(105%); transition: transform .12s ease-out;
+    }
+    .hole.up .critter { transform: translateY(6%); }
+    .hole.hit .critter { transform: translateY(6%) scale(0.75) rotate(-15deg); opacity: .55; }
+    .hole.bad { animation: shake .3s; }
+    @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    .stage.flash { box-shadow: 0 0 0 3px var(--red) inset; }
+    @media (prefers-reduced-motion: reduce) { .critter { transition: none; } .hole.bad { animation: none; } }
+  </style>
+</head>
+<body class="game-page">
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="../../">GAMERS OF <span>BANGLADESH</span></a>
+      <a class="nav-link" href="../../#games">← All games</a>
+    </div>
+  </header>
+
+  <main class="game-main">
+    <h1 class="game-title">🐅 SUNDARBANS TAP</h1>
+    <div class="hud">
+      <span class="pill">SCORE <b id="score">0</b></span>
+      <span class="pill">TIME <b id="time">30</b></span>
+      <span class="pill">BEST <b id="best">0</b></span>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="field" id="field"></div>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">SUNDARBANS TAP</h2>
+        <p id="ovText">Royal Bengal tigers are peeking out of the mangroves. Tap each tiger for +1. Tap a crocodile and lose 3. You have 30 seconds!</p>
+        <div class="big" id="ovScore" hidden></div>
+        <button class="btn" id="startBtn">START</button>
+      </div>
+    </div>
+    <p class="help">Tap or click the tigers 🐅 · Avoid the crocodiles 🐊 · Keyboard: number keys 1–9</p>
+  </main>
+
+  <script src="../../assets/common.js"></script>
+  <script>
+  (function () {
+    const ROUND = 30;
+    const field = document.getElementById('field');
+    const stage = document.getElementById('stage');
+    const overlay = document.getElementById('overlay');
+    const scoreEl = document.getElementById('score');
+    const timeEl = document.getElementById('time');
+    const bestEl = document.getElementById('best');
+    const ovTitle = document.getElementById('ovTitle');
+    const ovText = document.getElementById('ovText');
+    const ovScore = document.getElementById('ovScore');
+    const startBtn = document.getElementById('startBtn');
+
+    const holes = [];
+    for (let i = 0; i < 9; i++) {
+      const b = document.createElement('button');
+      b.className = 'hole';
+      b.setAttribute('aria-label', 'Hole ' + (i + 1));
+      b.innerHTML = '<span class="pit"><span class="critter"></span></span>';
+      b.addEventListener('pointerdown', e => { e.preventDefault(); whack(i); });
+      field.appendChild(b);
+      holes.push({ el: b, critter: b.querySelector('.critter'), kind: null, timer: null });
+    }
+
+    let state = 'ready', score = 0, timeLeft = ROUND, tick = null, popTimer = null, startTime = 0;
+    bestEl.textContent = GOB.getBest('tiger');
+
+    function clearHole(h) {
+      clearTimeout(h.timer);
+      h.kind = null;
+      h.el.classList.remove('up', 'hit');
+    }
+
+    function popUp() {
+      if (state !== 'playing') return;
+      const progress = 1 - timeLeft / ROUND;               // 0 → 1 over the round
+      const free = holes.filter(h => !h.kind);
+      if (free.length) {
+        const h = free[Math.floor(Math.random() * free.length)];
+        h.kind = Math.random() < 0.22 + progress * 0.1 ? 'croc' : 'tiger';
+        h.critter.textContent = h.kind === 'tiger' ? '🐅' : '🐊';
+        h.el.classList.remove('hit');
+        h.el.classList.add('up');
+        const stay = 1100 - progress * 600 + GOB.rand(-100, 150);
+        h.timer = setTimeout(() => clearHole(h), stay);
+      }
+      popTimer = setTimeout(popUp, Math.max(280, 700 - progress * 420) * GOB.rand(0.7, 1.2));
+    }
+
+    function whack(i) {
+      const h = holes[i];
+      if (state !== 'playing' || !h.kind || h.el.classList.contains('hit')) return;
+      clearTimeout(h.timer);
+      if (h.kind === 'tiger') {
+        score += 1;
+        h.el.classList.add('hit');
+        h.timer = setTimeout(() => clearHole(h), 180);
+      } else {
+        score = Math.max(0, score - 3);
+        h.el.classList.add('bad');
+        stage.classList.add('flash');
+        setTimeout(() => { h.el.classList.remove('bad'); stage.classList.remove('flash'); }, 300);
+        clearHole(h);
+      }
+      scoreEl.textContent = score;
+    }
+
+    function start() {
+      if (state === 'playing') return;
+      holes.forEach(clearHole);
+      score = 0; timeLeft = ROUND; startTime = performance.now();
+      scoreEl.textContent = 0; timeEl.textContent = ROUND;
+      state = 'playing'; overlay.hidden = true;
+      tick = setInterval(() => {
+        timeLeft = Math.max(0, ROUND - (performance.now() - startTime) / 1000);
+        timeEl.textContent = Math.ceil(timeLeft);
+        if (timeLeft <= 0) end();
+      }, 100);
+      popUp();
+    }
+
+    function end() {
+      state = 'over';
+      clearInterval(tick); clearTimeout(popTimer);
+      holes.forEach(clearHole);
+      const record = GOB.saveBest('tiger', score);
+      bestEl.textContent = GOB.getBest('tiger');
+      ovTitle.textContent = record ? 'NEW RECORD!' : "TIME'S UP!";
+      ovText.textContent = record ? 'Fastest hands in the Sundarbans!' : 'The tigers are back in hiding. Go again?';
+      ovScore.hidden = false; ovScore.textContent = score;
+      startBtn.textContent = 'PLAY AGAIN';
+      overlay.hidden = false; startBtn.focus();
+    }
+
+    startBtn.addEventListener('click', start);
+    document.addEventListener('keydown', e => {
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= 9 && state === 'playing') { whack(n - 1); e.preventDefault(); }
+    });
+    // Leaving the tab ends the round so nobody gets a free score while away.
+    document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'playing') end(); });
+  })();
+  </script>
+</body>
+</html>

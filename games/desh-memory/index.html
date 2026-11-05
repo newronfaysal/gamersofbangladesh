@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Desh Memory — Gamers of Bangladesh</title>
+  <meta name="description" content="Match pairs of Bangladeshi favourites in as few moves as possible. A free memory game.">
+  <meta name="theme-color" content="#0b0f0d">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <style>
+    .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 16px; }
+    .mcard {
+      aspect-ratio: 3 / 4; border: 0; padding: 0; background: none; cursor: pointer;
+      perspective: 600px; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .mcard .inner {
+      position: relative; display: block; width: 100%; height: 100%;
+      transition: transform .35s ease; transform-style: preserve-3d;
+    }
+    .mcard.flipped .inner, .mcard.matched .inner { transform: rotateY(180deg); }
+    .face {
+      position: absolute; inset: 0; border-radius: 10px; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    }
+    .back {
+      background:
+        radial-gradient(circle at 45% 50%, var(--red) 0 22%, transparent 23%),
+        var(--green);
+      border: 2px solid #006b44;
+    }
+    .front { background: var(--panel-2); border: 2px solid var(--line); transform: rotateY(180deg); }
+    .front .emoji { font-size: clamp(26px, 8vw, 40px); line-height: 1; }
+    .front .label { font-size: clamp(9px, 2.4vw, 11px); color: var(--muted); font-weight: 600; }
+    .mcard.matched .front { border-color: var(--green); box-shadow: 0 0 12px rgba(0,168,107,.35) inset; }
+    .mcard:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; border-radius: 10px; }
+    @media (prefers-reduced-motion: reduce) { .mcard .inner { transition: none; } }
+  </style>
+</head>
+<body class="game-page">
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="../../">GAMERS OF <span>BANGLADESH</span></a>
+      <a class="nav-link" href="../../#games">← All games</a>
+    </div>
+  </header>
+
+  <main class="game-main">
+    <h1 class="game-title">🃏 DESH MEMORY</h1>
+    <div class="hud">
+      <span class="pill">MOVES <b id="moves">0</b></span>
+      <span class="pill">TIME <b id="time">0s</b></span>
+      <span class="pill">BEST <b id="best">—</b></span>
+    </div>
+
+    <div class="stage">
+      <div class="board" id="board"></div>
+      <div class="overlay" id="overlay" hidden>
+        <h2 id="ovTitle">ALL MATCHED!</h2>
+        <p id="ovText"></p>
+        <div class="big" id="ovScore"></div>
+        <button class="btn" id="againBtn">PLAY AGAIN</button>
+      </div>
+    </div>
+    <button class="btn secondary" id="restartBtn">RESTART</button>
+    <p class="help">Flip two cards at a time. Find all 8 pairs in as few moves as you can.</p>
+  </main>
+
+  <script src="../../assets/common.js"></script>
+  <script>
+  (function () {
+    const ITEMS = [
+      ['🐅', 'Bagh'], ['🥭', 'Aam'], ['🛺', 'CNG'], ['🏏', 'Cricket'],
+      ['🐟', 'Ilish'], ['☕', 'Cha'], ['⛵', 'Nouka'], ['🌾', 'Dhan'],
+    ];
+    const board = document.getElementById('board');
+    const movesEl = document.getElementById('moves');
+    const timeEl = document.getElementById('time');
+    const bestEl = document.getElementById('best');
+    const overlay = document.getElementById('overlay');
+    const ovTitle = document.getElementById('ovTitle');
+    const ovText = document.getElementById('ovText');
+    const ovScore = document.getElementById('ovScore');
+
+    let open = [], lock = false, moves = 0, matched = 0, startTime = 0, timer = null;
+
+    function showBest() {
+      const b = GOB.getBest('memory');
+      bestEl.textContent = b ? b + ' moves' : '—';
+    }
+
+    function shuffle(a) {
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a;
+    }
+
+    function newGame() {
+      clearInterval(timer); timer = null;
+      open = []; lock = false; moves = 0; matched = 0;
+      movesEl.textContent = 0; timeEl.textContent = '0s';
+      overlay.hidden = true;
+      board.innerHTML = '';
+      shuffle([...ITEMS, ...ITEMS]).forEach(([emoji, label]) => {
+        const b = document.createElement('button');
+        b.className = 'mcard';
+        b.dataset.key = label;
+        b.setAttribute('aria-label', 'Hidden card');
+        b.innerHTML = '<span class="inner"><span class="face back"></span>' +
+          '<span class="face front"><span class="emoji">' + emoji + '</span><span class="label">' + label + '</span></span></span>';
+        b.addEventListener('click', () => flip(b, label));
+        board.appendChild(b);
+      });
+      showBest();
+    }
+
+    function flip(card, label) {
+      if (lock || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+      if (!timer) {
+        startTime = performance.now();
+        timer = setInterval(() => { timeEl.textContent = Math.floor((performance.now() - startTime) / 1000) + 's'; }, 250);
+      }
+      card.classList.add('flipped');
+      card.setAttribute('aria-label', label);
+      open.push(card);
+      if (open.length < 2) return;
+
+      moves++; movesEl.textContent = moves;
+      const [a, b] = open;
+      if (a.dataset.key === b.dataset.key) {
+        a.classList.add('matched'); b.classList.add('matched');
+        open = []; matched++;
+        if (matched === ITEMS.length) setTimeout(win, 450);
+      } else {
+        lock = true;
+        setTimeout(() => {
+          a.classList.remove('flipped'); b.classList.remove('flipped');
+          a.setAttribute('aria-label', 'Hidden card'); b.setAttribute('aria-label', 'Hidden card');
+          open = []; lock = false;
+        }, 800);
+      }
+    }
+
+    function win() {
+      clearInterval(timer);
+      const secs = Math.floor((performance.now() - startTime) / 1000);
+      const record = GOB.saveBest('memory', moves, true);
+      showBest();
+      ovTitle.textContent = record ? 'NEW RECORD!' : 'ALL MATCHED!';
+      ovText.textContent = 'You finished in ' + secs + ' seconds.' + (moves <= 12 ? ' Amazing memory!' : '');
+      ovScore.textContent = moves + ' moves';
+      overlay.hidden = false;
+      document.getElementById('againBtn').focus();
+    }
+
+    document.getElementById('againBtn').addEventListener('click', newGame);
+    document.getElementById('restartBtn').addEventListener('click', newGame);
+    newGame();
+  })();
+  </script>
+</body>
+</html>

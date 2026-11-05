@@ -1,0 +1,137 @@
+:root {
+  --bg: #0b0f0d;
+  --panel: #111a16;
+  --panel-2: #16231d;
+  --line: #1f3329;
+  --green: #00a86b;
+  --green-dim: rgba(0, 168, 107, 0.15);
+  --red: #f42a41;
+  --yellow: #ffcc33;
+  --text: #e8f5ee;
+  --muted: #8aa39a;
+  --radius: 14px;
+  --pixel: 'Press Start 2P', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(244, 42, 65, 0.14), transparent 45%),
+    linear-gradient(rgba(0, 168, 107, 0.05) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgba(0, 168, 107, 0.05) 1px, transparent 1px) 0 0 / 32px 32px,
+    var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+
+/* Header */
+.site-header {
+  border-bottom: 1px solid var(--line);
+  background: rgba(11, 15, 13, 0.85);
+  backdrop-filter: blur(8px);
+  position: sticky; top: 0; z-index: 10;
+}
+.site-header .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 12px; }
+.brand {
+  font-family: var(--pixel); font-size: 12px; line-height: 1.5;
+  color: var(--green); text-decoration: none;
+  text-shadow: 0 0 10px rgba(0, 168, 107, 0.5);
+}
+.brand span { color: var(--red); text-shadow: 0 0 10px rgba(244, 42, 65, 0.5); }
+.nav-link { font-size: 14px; color: var(--muted); text-decoration: none; }
+.nav-link:hover { color: var(--text); }
+
+/* Hero */
+.hero { text-align: center; padding: 56px 0 32px; }
+.hero h1 {
+  font-family: var(--pixel); font-size: clamp(18px, 4.6vw, 34px); line-height: 1.6;
+  color: var(--green); text-shadow: 0 0 14px rgba(0, 168, 107, 0.55);
+}
+.hero h1 span { color: var(--red); text-shadow: 0 0 14px rgba(244, 42, 65, 0.55); }
+.hero p { color: var(--muted); max-width: 560px; margin: 16px auto 0; font-size: 16px; }
+
+/* Game grid */
+.section-title { font-family: var(--pixel); font-size: 13px; color: var(--text); margin: 24px 0 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; padding-bottom: 48px; }
+.card {
+  display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  text-decoration: none; overflow: hidden;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.card:hover, .card:focus-visible {
+  transform: translateY(-3px); border-color: var(--green);
+  box-shadow: 0 8px 24px rgba(0, 168, 107, 0.18); outline: none;
+}
+.card .thumb {
+  height: 130px; display: grid; place-items: center; font-size: 56px;
+  background: radial-gradient(circle at 50% 60%, var(--green-dim), transparent 70%), var(--panel-2);
+  border-bottom: 1px solid var(--line);
+}
+.card .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.card h3 { font-family: var(--pixel); font-size: 11px; line-height: 1.6; color: var(--green); }
+.card p { font-size: 14px; color: var(--muted); flex: 1; }
+.card .meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.card .play {
+  font-family: var(--pixel); font-size: 9px; color: var(--bg); background: var(--green);
+  padding: 7px 10px; border-radius: 6px;
+}
+.best { color: var(--yellow); }
+
+footer.site-footer { border-top: 1px solid var(--line); padding: 24px 0 32px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* ===== Game page shell ===== */
+.game-page { display: flex; flex-direction: column; min-height: 100vh; }
+.game-main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 16px 16px 32px; gap: 12px; }
+.game-title { font-family: var(--pixel); font-size: clamp(13px, 3.4vw, 18px); color: var(--green); text-align: center; line-height: 1.6; }
+.hud {
+  display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  font-family: var(--pixel); font-size: 10px;
+}
+.hud .pill { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; white-space: nowrap; }
+.hud .pill b { color: var(--yellow); font-weight: normal; }
+
+.stage {
+  position: relative; width: 100%; max-width: 480px;
+  border: 2px solid var(--line); border-radius: var(--radius); overflow: hidden;
+  background: var(--panel); touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.stage canvas { display: block; width: 100%; height: auto; }
+
+.overlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 20px;
+  background: rgba(11, 15, 13, 0.82); backdrop-filter: blur(2px);
+}
+.overlay[hidden] { display: none; }
+.overlay h2 { font-family: var(--pixel); font-size: 16px; line-height: 1.6; color: var(--green); }
+.overlay p { color: var(--muted); font-size: 14px; max-width: 320px; }
+.overlay .big { font-family: var(--pixel); font-size: 22px; color: var(--yellow); }
+
+.btn {
+  font-family: var(--pixel); font-size: 11px; cursor: pointer;
+  background: var(--green); color: var(--bg); border: 0; border-radius: 8px;
+  padding: 12px 18px; box-shadow: 0 4px 0 #006b44; transition: transform .08s ease, box-shadow .08s ease;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #006b44; }
+.btn.secondary { background: var(--panel-2); color: var(--text); box-shadow: 0 4px 0 #0a120e; border: 1px solid var(--line); }
+
+.help { color: var(--muted); font-size: 13px; text-align: center; max-width: 480px; }
+.touch-controls { display: none; gap: 12px; width: 100%; max-width: 480px; }
+.touch-controls button {
+  flex: 1; height: 64px; font-size: 26px; border-radius: var(--radius);
+  background: var(--panel); border: 1px solid var(--line); touch-action: manipulation;
+}
+.touch-controls button:active { background: var(--panel-2); border-color: var(--green); }
+@media (hover: none) and (pointer: coarse) { .touch-controls { display: flex; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}

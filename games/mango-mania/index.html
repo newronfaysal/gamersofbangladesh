@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Mango Mania — Gamers of Bangladesh</title>
+  <meta name="description" content="Catch falling mangoes and avoid the bees. A free browser game.">
+  <meta name="theme-color" content="#0b0f0d">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="game-page">
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="../../">GAMERS OF <span>BANGLADESH</span></a>
+      <a class="nav-link" href="../../#games">← All games</a>
+    </div>
+  </header>
+
+  <main class="game-main">
+    <h1 class="game-title">🥭 MANGO MANIA</h1>
+    <div class="hud">
+      <span class="pill">SCORE <b id="score">0</b></span>
+      <span class="pill">LIVES <b id="lives">❤❤❤</b></span>
+      <span class="pill">BEST <b id="best">0</b></span>
+    </div>
+
+    <div class="stage" id="stage">
+      <canvas id="canvas" aria-label="Mango Mania game"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">MANGO MANIA</h2>
+        <p id="ovText">It's mango season in Rajshahi! Catch mangoes in your basket. Golden mangoes are worth 5. Missing a mango or catching a bee costs a life.</p>
+        <div class="big" id="ovScore" hidden></div>
+        <button class="btn" id="startBtn">START</button>
+      </div>
+    </div>
+
+    <p class="help">Phone: drag your finger left and right · Keyboard: ← → or A / D · Mouse: move over the game</p>
+  </main>
+
+  <script src="../../assets/common.js"></script>
+  <script>
+  (function () {
+    const W = 360, H = 560, BASKET_W = 76, BASKET_Y = H - 70;
+    const canvas = document.getElementById('canvas');
+    const ctx = GOB.setupCanvas(canvas, W, H);
+    const overlay = document.getElementById('overlay');
+    const scoreEl = document.getElementById('score');
+    const livesEl = document.getElementById('lives');
+    const bestEl = document.getElementById('best');
+    const ovTitle = document.getElementById('ovTitle');
+    const ovText = document.getElementById('ovText');
+    const ovScore = document.getElementById('ovScore');
+    const startBtn = document.getElementById('startBtn');
+
+    let state = 'ready', basketX, targetX, items, popups, score, lives, spawnTimer, elapsed, last, raf;
+    const keys = { left: false, right: false };
+    bestEl.textContent = GOB.getBest('mango');
+
+    function reset() {
+      basketX = targetX = W / 2;
+      items = []; popups = [];
+      score = 0; lives = 3; spawnTimer = 0.5; elapsed = 0;
+      updateHud();
+    }
+
+    function updateHud() {
+      scoreEl.textContent = score;
+      livesEl.textContent = '❤'.repeat(lives) + '♡'.repeat(Math.max(0, 3 - lives));
+    }
+
+    function spawn() {
+      const r = Math.random();
+      const beeChance = Math.min(0.32, 0.12 + elapsed / 300);
+      const type = r < beeChance ? 'bee' : r < beeChance + 0.07 ? 'gold' : 'mango';
+      const fall = 150 + Math.min(260, elapsed * 4) + GOB.rand(0, 60);
+      items.push({ type, x: GOB.rand(24, W - 24), y: -24, vy: fall, wobble: GOB.rand(0, Math.PI * 2) });
+      spawnTimer = Math.max(0.38, 0.95 - elapsed / 90) * GOB.rand(0.7, 1.2);
+    }
+
+    function update(dt) {
+      elapsed += dt;
+      if (keys.left) targetX -= 420 * dt;
+      if (keys.right) targetX += 420 * dt;
+      targetX = Math.max(BASKET_W / 2, Math.min(W - BASKET_W / 2, targetX));
+      basketX += (targetX - basketX) * Math.min(1, dt * 18);
+
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) spawn();
+
+      for (const it of items) {
+        it.y += it.vy * dt;
+        it.wobble += dt * 6;
+        if (it.type === 'bee') it.x += Math.sin(it.wobble) * 60 * dt;
+        // Caught?
+        if (!it.done && it.y > BASKET_Y - 8 && it.y < BASKET_Y + 18 && Math.abs(it.x - basketX) < BASKET_W / 2 + 4) {
+          it.done = true;
+          if (it.type === 'bee') { lives--; popups.push({ x: it.x, y: BASKET_Y - 20, text: 'OUCH!', color: '#f42a41', t: 0 }); }
+          else {
+            const pts = it.type === 'gold' ? 5 : 1;
+            score += pts;
+            popups.push({ x: it.x, y: BASKET_Y - 20, text: '+' + pts, color: it.type === 'gold' ? '#ffcc33' : '#7CFFB2', t: 0 });
+          }
+          updateHud();
+        }
+        // Missed a mango?
+        if (!it.done && it.y > H + 20) {
+          it.done = true;
+          if (it.type !== 'bee') { lives--; popups.push({ x: it.x, y: H - 30, text: 'MISS', color: '#f42a41', t: 0 }); updateHud(); }
+        }
+      }
+      items = items.filter(it => !it.done);
+      popups.forEach(p => { p.t += dt; p.y -= 40 * dt; });
+      popups = popups.filter(p => p.t < 0.8);
+      if (lives <= 0) gameOver();
+    }
+
+    function drawMango(x, y, gold) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(-0.4);
+      const g = ctx.createRadialGradient(-5, -6, 2, 0, 0, 18);
+      if (gold) { g.addColorStop(0, '#fff7b0'); g.addColorStop(1, '#e0a800'); }
+      else { g.addColorStop(0, '#ffd04d'); g.addColorStop(0.7, '#ff9a1f'); g.addColorStop(1, '#e0601a'); }
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.ellipse(0, 0, 14, 18, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#2e8b3d';
+      ctx.beginPath(); ctx.ellipse(6, -18, 4, 9, 0.9, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      if (gold) {
+        ctx.fillStyle = 'rgba(255,240,150,0.9)';
+        const s = 3 + Math.sin(performance.now() / 120) * 2;
+        ctx.fillRect(x + 12, y - 16, s, s); ctx.fillRect(x - 16, y + 6, s, s);
+      }
+    }
+
+    function drawBee(x, y, wob) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      const flap = Math.sin(wob * 4) * 3;
+      ctx.beginPath(); ctx.ellipse(x - 6, y - 10 - flap, 6, 9, -0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x + 6, y - 10 + flap, 6, 9, 0.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffcc00';
+      ctx.beginPath(); ctx.ellipse(x, y, 14, 10, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(x - 5, y - 9, 4, 18); ctx.fillRect(x + 3, y - 9, 4, 18);
+      ctx.beginPath(); ctx.arc(x + 13, y, 3, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function drawBasket(x) {
+      const y = BASKET_Y;
+      ctx.fillStyle = '#8a5a2b';
+      ctx.beginPath();
+      ctx.moveTo(x - BASKET_W / 2, y); ctx.lineTo(x + BASKET_W / 2, y);
+      ctx.lineTo(x + BASKET_W / 2 - 10, y + 38); ctx.lineTo(x - BASKET_W / 2 + 10, y + 38);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#5e3b18'; ctx.lineWidth = 2;
+      for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(x - BASKET_W / 2 + 4, y + i * 9); ctx.lineTo(x + BASKET_W / 2 - 4, y + i * 9); ctx.stroke(); }
+      ctx.fillStyle = '#b07a3e'; ctx.fillRect(x - BASKET_W / 2 - 4, y - 4, BASKET_W + 8, 8);
+    }
+
+    function drawScene() {
+      const sky = ctx.createLinearGradient(0, 0, 0, H);
+      sky.addColorStop(0, '#0f2a1d'); sky.addColorStop(1, '#16382a');
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+      // tree canopy
+      ctx.fillStyle = '#1e5a34';
+      for (let i = 0; i < 8; i++) { ctx.beginPath(); ctx.arc(i * 52, 8, 46, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = '#2a7343';
+      for (let i = 0; i < 8; i++) { ctx.beginPath(); ctx.arc(i * 52 + 26, -6, 36, 0, Math.PI * 2); ctx.fill(); }
+      // grass
+      ctx.fillStyle = '#245236'; ctx.fillRect(0, H - 26, W, 26);
+    }
+
+    function draw() {
+      drawScene();
+      for (const it of items) {
+        if (it.type === 'bee') drawBee(it.x, it.y, it.wobble);
+        else drawMango(it.x, it.y, it.type === 'gold');
+      }
+      drawBasket(basketX);
+      ctx.font = '12px "Press Start 2P", monospace'; ctx.textAlign = 'center';
+      for (const p of popups) { ctx.globalAlpha = 1 - p.t / 0.8; ctx.fillStyle = p.color; ctx.fillText(p.text, p.x, p.y); }
+      ctx.globalAlpha = 1;
+    }
+
+    function loop(t) {
+      const dt = Math.min(0.05, (t - last) / 1000);
+      last = t;
+      if (state === 'playing') update(dt);
+      draw();
+      if (state === 'playing') raf = requestAnimationFrame(loop);
+    }
+
+    function showOverlay(title, text, scoreText, btn) {
+      ovTitle.textContent = title; ovText.textContent = text;
+      ovScore.hidden = !scoreText; ovScore.textContent = scoreText || '';
+      startBtn.textContent = btn; overlay.hidden = false; startBtn.focus();
+    }
+
+    function run() {
+      state = 'playing'; overlay.hidden = true;
+      last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
+    }
+
+    function start() {
+      if (state === 'playing') return;
+      if (state !== 'paused') reset();
+      run();
+    }
+
+    function pause() {
+      if (state !== 'playing') return;
+      state = 'paused';
+      showOverlay('PAUSED', 'Take a break. Your mangoes will wait.', '', 'RESUME');
+    }
+
+    function gameOver() {
+      state = 'over';
+      const record = GOB.saveBest('mango', score);
+      bestEl.textContent = GOB.getBest('mango');
+      showOverlay(record ? 'NEW RECORD!' : 'GAME OVER', record ? 'Mango champion of Rajshahi!' : 'The basket is empty. One more round?', String(score), 'PLAY AGAIN');
+    }
+
+    // Controls
+    startBtn.addEventListener('click', start);
+    function pointerTo(e) {
+      const r = canvas.getBoundingClientRect();
+      targetX = (e.clientX - r.left) / r.width * W;
+    }
+    canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); pointerTo(e); });
+    canvas.addEventListener('pointermove', e => { if (e.pointerType === 'mouse' || e.buttons) pointerTo(e); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { keys.left = true; e.preventDefault(); }
+      else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { keys.right = true; e.preventDefault(); }
+      else if ((e.key === ' ' || e.key === 'Enter') && state !== 'playing') { start(); e.preventDefault(); }
+      else if (e.key === 'Escape' || e.key === 'p') pause();
+    });
+    document.addEventListener('keyup', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+      if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+    reset();
+    draw();
+  })();
+  </script>
+</body>
+</html>

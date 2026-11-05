@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Rickshaw Rush — Gamers of Bangladesh</title>
+  <meta name="description" content="Steer your rickshaw through Dhaka traffic. A free browser game.">
+  <meta name="theme-color" content="#0b0f0d">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body class="game-page">
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="../../">GAMERS OF <span>BANGLADESH</span></a>
+      <a class="nav-link" href="../../#games">← All games</a>
+    </div>
+  </header>
+
+  <main class="game-main">
+    <h1 class="game-title">🛺 RICKSHAW RUSH</h1>
+    <div class="hud">
+      <span class="pill">DIST <b id="score">0m</b></span>
+      <span class="pill">BEST <b id="best">0m</b></span>
+    </div>
+
+    <div class="stage" id="stage">
+      <canvas id="canvas" aria-label="Rickshaw Rush game"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">RICKSHAW RUSH</h2>
+        <p id="ovText">Dhaka traffic is wild today. Switch lanes to dodge buses, cars and CNGs. The road gets faster the further you go!</p>
+        <div class="big" id="ovScore" hidden></div>
+        <button class="btn" id="startBtn">START</button>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <button id="leftBtn" aria-label="Move left">◀</button>
+      <button id="rightBtn" aria-label="Move right">▶</button>
+    </div>
+    <p class="help">Keyboard: ← → or A / D · Phone: tap the buttons, or tap the left / right side of the road</p>
+  </main>
+
+  <script src="../../assets/common.js"></script>
+  <script>
+  (function () {
+    const W = 360, H = 560, LANES = 3, LANE_W = 88, ROAD_X = (W - LANE_W * LANES) / 2;
+    const canvas = document.getElementById('canvas');
+    const ctx = GOB.setupCanvas(canvas, W, H);
+    const overlay = document.getElementById('overlay');
+    const scoreEl = document.getElementById('score');
+    const bestEl = document.getElementById('best');
+    const ovTitle = document.getElementById('ovTitle');
+    const ovText = document.getElementById('ovText');
+    const ovScore = document.getElementById('ovScore');
+    const startBtn = document.getElementById('startBtn');
+
+    const VEHICLES = [
+      { kind: 'bus',  w: 62, h: 130, color: '#d93636', stripe: '#ffcc33' },
+      { kind: 'bus',  w: 62, h: 130, color: '#2f6fd6', stripe: '#ffffff' },
+      { kind: 'cng',  w: 50, h: 70,  color: '#1fa45a', stripe: '#0e5c32' },
+      { kind: 'car',  w: 52, h: 86,  color: '#e8e8e8', stripe: '#9aa' },
+      { kind: 'car',  w: 52, h: 86,  color: '#ffb02e', stripe: '#b36b00' },
+    ];
+
+    let state = 'ready', player, traffic, speed, dist, spawnTimer, roadOffset, last, raf;
+    let best = GOB.getBest('rickshaw');
+    bestEl.textContent = best + 'm';
+
+    function laneX(lane) { return ROAD_X + LANE_W * lane + LANE_W / 2; }
+
+    function reset() {
+      player = { lane: 1, x: laneX(1), y: H - 110, w: 44, h: 78 };
+      traffic = [];
+      speed = 240;          // pixels per second
+      dist = 0;
+      spawnTimer = 0.6;
+      roadOffset = 0;
+    }
+
+    function move(dir) {
+      if (state !== 'playing') return;
+      player.lane = Math.max(0, Math.min(LANES - 1, player.lane + dir));
+    }
+
+    function spawn() {
+      // Pick 1 lane (sometimes 2) to block, always leaving at least one free lane.
+      const lanes = [0, 1, 2].sort(() => Math.random() - 0.5);
+      const count = dist > 400 && Math.random() < 0.35 ? 2 : 1;
+      for (let i = 0; i < count; i++) {
+        const v = VEHICLES[Math.floor(Math.random() * VEHICLES.length)];
+        traffic.push({ ...v, lane: lanes[i], x: laneX(lanes[i]), y: -v.h - GOB.rand(0, 40) });
+      }
+      const gap = Math.max(0.55, 1.25 - dist / 2500);
+      spawnTimer = GOB.rand(gap, gap + 0.5);
+    }
+
+    function update(dt) {
+      speed = Math.min(620, 240 + dist * 0.18);
+      dist += speed * dt / 12;
+      roadOffset = (roadOffset + speed * dt) % 60;
+
+      // Smooth lane change
+      const target = laneX(player.lane);
+      player.x += (target - player.x) * Math.min(1, dt * 14);
+
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) spawn();
+
+      for (const v of traffic) v.y += speed * dt * 0.75;
+      traffic = traffic.filter(v => v.y < H + 20);
+
+      // Collision (slightly forgiving hitbox)
+      const px = player.x - player.w / 2 + 6, py = player.y + 8, pw = player.w - 12, ph = player.h - 14;
+      for (const v of traffic) {
+        const vx = v.x - v.w / 2, vy = v.y;
+        if (px < vx + v.w && px + pw > vx && py < vy + v.h && py + ph > vy) return gameOver();
+      }
+      scoreEl.textContent = Math.floor(dist) + 'm';
+    }
+
+    function roundRect(x, y, w, h, r, fill) {
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h);
+      ctx.fillStyle = fill; ctx.fill();
+    }
+
+    function drawRoad() {
+      // Roadside
+      ctx.fillStyle = '#1d3b2a'; ctx.fillRect(0, 0, W, H);
+      for (let y = -60 + roadOffset; y < H; y += 60) {
+        ctx.fillStyle = '#245236';
+        ctx.fillRect(8, y, 16, 30); ctx.fillRect(W - 24, y + 30, 16, 30);
+      }
+      // Asphalt
+      ctx.fillStyle = '#2b2f2d'; ctx.fillRect(ROAD_X, 0, LANE_W * LANES, H);
+      ctx.fillStyle = '#ffcc33';
+      ctx.fillRect(ROAD_X - 4, 0, 4, H); ctx.fillRect(ROAD_X + LANE_W * LANES, 0, 4, H);
+      // Lane dashes
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      for (let l = 1; l < LANES; l++) {
+        const x = ROAD_X + LANE_W * l - 2;
+        for (let y = -60 + roadOffset; y < H; y += 60) ctx.fillRect(x, y, 4, 30);
+      }
+    }
+
+    function drawRickshaw(cx, y) {
+      // wheels
+      ctx.fillStyle = '#111';
+      ctx.fillRect(cx - 24, y + 50, 6, 20); ctx.fillRect(cx + 18, y + 50, 6, 20);
+      ctx.fillRect(cx - 3, y - 2, 6, 16);
+      // body
+      roundRect(cx - 20, y + 30, 40, 44, 6, '#f42a41');
+      // hood (colourful canopy)
+      roundRect(cx - 22, y + 34, 44, 26, 10, '#00a86b');
+      ctx.fillStyle = '#ffcc33';
+      for (let i = 0; i < 4; i++) ctx.fillRect(cx - 18 + i * 10, y + 38, 4, 18);
+      // puller
+      ctx.fillStyle = '#7a4a2a'; ctx.beginPath(); ctx.arc(cx, y + 20, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.fillRect(cx - 8, y + 12, 16, 4);
+    }
+
+    function drawVehicle(v) {
+      const x = v.x - v.w / 2;
+      ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(x + 4, v.y + 6, v.w, v.h);
+      if (v.kind === 'cng') {
+        roundRect(x, v.y, v.w, v.h, 16, v.color);
+        roundRect(x + 6, v.y + 10, v.w - 12, v.h - 26, 10, v.stripe);
+        ctx.fillStyle = '#ffcc33'; ctx.fillRect(v.x - 4, v.y + v.h - 8, 8, 6);
+      } else {
+        roundRect(x, v.y, v.w, v.h, 8, v.color);
+        ctx.fillStyle = 'rgba(20,30,40,0.85)';
+        ctx.fillRect(x + 6, v.y + v.h - 22, v.w - 12, 14);   // windshield (faces down)
+        ctx.fillRect(x + 6, v.y + 8, v.w - 12, 10);
+        ctx.fillStyle = v.stripe;
+        if (v.kind === 'bus') { ctx.fillRect(x, v.y + 34, v.w, 6); ctx.fillRect(x, v.y + 70, v.w, 6); }
+        else ctx.fillRect(v.x - 3, v.y + 22, 6, v.h - 48);
+        ctx.fillStyle = '#ff4d4d';   // tail lights (traffic drives the same way as you)
+        ctx.fillRect(x + 4, v.y + v.h - 4, 10, 4); ctx.fillRect(x + v.w - 14, v.y + v.h - 4, 10, 4);
+      }
+    }
+
+    function draw() {
+      drawRoad();
+      traffic.forEach(drawVehicle);
+      drawRickshaw(player.x, player.y);
+    }
+
+    function loop(t) {
+      const dt = Math.min(0.05, (t - last) / 1000);
+      last = t;
+      if (state === 'playing') update(dt);
+      draw();
+      if (state === 'playing') raf = requestAnimationFrame(loop);
+    }
+
+    function run() {
+      state = 'playing';
+      overlay.hidden = true;
+      last = performance.now();
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(loop);
+    }
+
+    function start() {
+      if (state === 'playing') return;
+      if (state !== 'paused') reset();
+      run();
+    }
+
+    function pause() {
+      if (state !== 'playing') return;
+      state = 'paused';
+      ovTitle.textContent = 'PAUSED';
+      ovText.textContent = 'Taking a cha break? Press resume when ready.';
+      ovScore.hidden = true;
+      startBtn.textContent = 'RESUME';
+      overlay.hidden = false;
+      startBtn.focus();
+    }
+
+    function gameOver() {
+      state = 'over';
+      const score = Math.floor(dist);
+      const record = GOB.saveBest('rickshaw', score);
+      best = GOB.getBest('rickshaw');
+      bestEl.textContent = best + 'm';
+      ovTitle.textContent = record ? 'NEW RECORD!' : 'CRASH!';
+      ovText.textContent = record ? 'You are the king of Dhaka roads.' : 'Traffic got you. Try again?';
+      ovScore.hidden = false;
+      ovScore.textContent = score + 'm';
+      startBtn.textContent = 'PLAY AGAIN';
+      overlay.hidden = false;
+      startBtn.focus();
+    }
+
+    // Controls
+    startBtn.addEventListener('click', start);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { move(-1); e.preventDefault(); }
+      else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { move(1); e.preventDefault(); }
+      else if ((e.key === ' ' || e.key === 'Enter') && state !== 'playing') { start(); e.preventDefault(); }
+      else if (e.key === 'Escape' || e.key === 'p') pause();
+    });
+    document.getElementById('leftBtn').addEventListener('pointerdown', e => { e.preventDefault(); move(-1); });
+    document.getElementById('rightBtn').addEventListener('pointerdown', e => { e.preventDefault(); move(1); });
+    canvas.addEventListener('pointerdown', e => {
+      const r = canvas.getBoundingClientRect();
+      move(e.clientX - r.left < r.width / 2 ? -1 : 1);
+    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+    reset();
+    draw();
+  })();
+  </script>
+</body>
+</html>
