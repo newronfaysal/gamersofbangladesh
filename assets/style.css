@@ -48,6 +48,13 @@ button { font: inherit; color: inherit; }
 .nav-link { font-size: 14px; color: var(--muted); text-decoration: none; }
 .nav-link:hover { color: var(--text); }
 
+/* Maintenance notice */
+.notice {
+  background: rgba(255, 204, 51, 0.12); border-bottom: 1px solid rgba(255, 204, 51, 0.35);
+  color: var(--yellow); text-align: center; font-size: 14px; font-weight: 600;
+  padding: 10px 16px;
+}
+
 /* Hero */
 .hero { text-align: center; padding: 56px 0 32px; }
 .hero h1 {
