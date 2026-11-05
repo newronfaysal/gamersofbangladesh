@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gamers of Bangladesh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f0d;
+      --green: #00a86b;
+      --red: #f42a41;
+      --text: #e8f5ee;
+      --muted: #8aa39a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(244, 42, 65, 0.18), transparent 35%),
+        linear-gradient(rgba(0, 168, 107, 0.06) 1px, transparent 1px) 0 0 / 32px 32px,
+        linear-gradient(90deg, rgba(0, 168, 107, 0.06) 1px, transparent 1px) 0 0 / 32px 32px,
+        var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      padding: 24px 16px;
+      text-align: center;
+    }
+    main { max-width: 720px; }
+    .logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(16px, 4vw, 26px);
+      line-height: 1.6;
+      color: var(--green);
+      text-shadow: 0 0 12px rgba(0, 168, 107, 0.6);
+      margin-bottom: 40px;
+    }
+    .logo span { color: var(--red); text-shadow: 0 0 12px rgba(244, 42, 65, 0.6); }
+    h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(14px, 3.4vw, 22px);
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+    .cursor {
+      display: inline-block;
+      width: 0.6em;
+      height: 1em;
+      background: var(--green);
+      vertical-align: -0.1em;
+      margin-left: 6px;
+      animation: blink 1s steps(1) infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .bar {
+      width: min(420px, 100%);
+      height: 18px;
+      margin: 0 auto 16px;
+      border: 2px solid var(--green);
+      padding: 2px;
+    }
+    .fill {
+      height: 100%;
+      width: 0;
+      background: repeating-linear-gradient(90deg, var(--green) 0 12px, transparent 12px 16px);
+      animation: load 4s ease-in-out infinite;
+    }
+    @keyframes load { 0% { width: 0; } 70%, 100% { width: 72%; } }
+    p { color: var(--muted); font-size: 16px; line-height: 1.6; }
+    footer { margin-top: 48px; font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="logo">GAMERS OF<br><span>BANGLADESH</span></div>
+    <h1>This website is under construction<span class="cursor"></span></h1>
+    <div class="bar"><div class="fill"></div></div>
+    <p>Loading next level… Check back soon!</p>
+    <footer>&copy; <span id="year"></span> Gamers of Bangladesh</footer>
+  </main>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
