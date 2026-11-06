@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe — Gamers of Bangladesh</title>
+  <meta name="description" content="Play Tic Tac Toe against the computer (easy, medium or unbeatable) or with a friend. Free browser game.">
+  <meta name="theme-color" content="#0b0f0d">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <style>
+    .seg { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .seg button, .seg select {
+      min-height: 44px; padding: 0 14px; border-radius: 10px; cursor: pointer;
+      background: var(--panel); color: var(--text); border: 1px solid var(--line); font-weight: 600; font-size: 14px;
+    }
+    .seg button[aria-pressed="true"] { background: var(--green); color: #06130d; border-color: var(--green); }
+    .board3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; background: var(--panel-2); }
+    .cell {
+      aspect-ratio: 1; display: grid; place-items: center; line-height: 1; cursor: pointer;
+      font-family: var(--pixel); font-size: clamp(34px, 13vw, 64px); color: var(--text);
+      background: var(--panel); border: 2px solid var(--line); border-radius: 12px;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    }
+    .cell:hover:not(:disabled), .cell:focus-visible { border-color: var(--green); }
+    .cell:disabled { cursor: default; }
+    .cell.x { color: #ff4d5e; text-shadow: 0 0 14px rgba(255, 77, 94, .55); }
+    .cell.o { color: #2dd4bf; text-shadow: 0 0 14px rgba(45, 212, 191, .55); }
+    .cell.win { background: rgba(255, 204, 51, .16); border-color: var(--yellow); }
+    .status { font-family: var(--pixel); font-size: 12px; line-height: 1.7; text-align: center; min-height: 2.6em; }
+    @media (prefers-reduced-motion: no-preference) {
+      .cell.win { animation: pop .45s ease; }
+      @keyframes pop { 50% { transform: scale(1.1); } }
+    }
+  </style>
+</head>
+<body class="game-page" data-game="ttt">
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="../../">GAMERS OF <span>BANGLADESH</span></a>
+      <a class="nav-link" href="../../#games">← All games</a>
+    </div>
+  </header>
+
+  <main class="game-main">
+    <h1 class="game-title">TIC TAC TOE</h1>
+
+    <div class="seg" role="group" aria-label="Game mode">
+      <button id="modeCpu" aria-pressed="true">vs Computer</button>
+      <button id="modeTwo" aria-pressed="false">2 Players</button>
+      <label class="sr-only" for="level">Difficulty</label>
+      <select id="level">
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard (unbeatable)</option>
+      </select>
+    </div>
+
+    <div class="hud">
+      <span class="pill"><span id="lblA">YOU</span> <b id="sa">0</b></span>
+      <span class="pill">DRAW <b id="sd">0</b></span>
+      <span class="pill"><span id="lblB">CPU</span> <b id="sb">0</b></span>
+    </div>
+    <div class="hud">
+      <span class="pill">STREAK <b id="streak">0</b></span>
+      <span class="pill">BEST <b id="best">0</b></span>
+    </div>
+
+    <div class="stage" style="max-width:380px">
+      <div class="board3" id="board" role="grid" aria-label="Tic Tac Toe board"></div>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+    <button class="btn" id="again" hidden>NEXT ROUND</button>
+    <p class="help">Tap a square or press keys 1–9. In vs Computer you are ✕ and the first move alternates each round. Your streak counts consecutive wins; draws don't break it.</p>
+  </main>
+
+  <script src="../../assets/common.js"></script>
+  <script>
+  (function () {
+    var LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    var boardEl = document.getElementById('board'), statusEl = document.getElementById('status'), againBtn = document.getElementById('again');
+    var levelEl = document.getElementById('level'), modeCpu = document.getElementById('modeCpu'), modeTwo = document.getElementById('modeTwo');
+    var el = function (id) { return document.getElementById(id); };
+
+    var board, turn, over, cpuMode = true, starter = 'X', stats = { x: 0, d: 0, o: 0 }, streak = 0, timer = null;
+    var cells = [];
+    for (var i = 0; i < 9; i++) (function (i) {
+      var b = document.createElement('button');
+      b.className = 'cell'; b.setAttribute('role', 'gridcell'); b.setAttribute('aria-label', 'Square ' + (i + 1) + ', empty');
+      b.addEventListener('click', function () { humanMove(i); });
+      boardEl.appendChild(b); cells.push(b);
+    })(i);
+
+    function winner(b) {
+      for (var k = 0; k < LINES.length; k++) {
+        var l = LINES[k];
+        if (b[l[0]] && b[l[0]] === b[l[1]] && b[l[0]] === b[l[2]]) return { p: b[l[0]], line: l };
+      }
+      for (var j = 0; j < 9; j++) if (!b[j]) return null;
+      return { p: 'draw' };
+    }
+
+    // Exhaustive minimax (a 3x3 board is tiny). Prefers faster wins and slower losses.
+    function score(b, mover, ai, hu, depth) {
+      var w = winner(b);
+      if (w) return w.p === ai ? 10 - depth : w.p === hu ? depth - 10 : 0;
+      var best = mover === ai ? -99 : 99;
+      for (var i = 0; i < 9; i++) if (!b[i]) {
+        b[i] = mover;
+        var s = score(b, mover === ai ? hu : ai, ai, hu, depth + 1);
+        b[i] = null;
+        best = mover === ai ? Math.max(best, s) : Math.min(best, s);
+      }
+      return best;
+    }
+    function cpuPick() {
+      var empty = [], i;
+      for (i = 0; i < 9; i++) if (!board[i]) empty.push(i);
+      var chance = { easy: 0.35, medium: 0.75, hard: 1 }[levelEl.value];
+      if (Math.random() > chance) return empty[Math.floor(Math.random() * empty.length)];
+      var bestS = -99, moves = [];
+      empty.forEach(function (m) {
+        board[m] = 'O';
+        var s = score(board, 'X', 'O', 'X', 1);
+        board[m] = null;
+        if (s > bestS) { bestS = s; moves = [m]; } else if (s === bestS) moves.push(m);
+      });
+      return moves[Math.floor(Math.random() * moves.length)];
+    }
+
+    function setStatus(t) { statusEl.textContent = t; }
+    function labels() {
+      el('lblA').textContent = cpuMode ? 'YOU' : 'X';
+      el('lblB').textContent = cpuMode ? 'CPU' : 'O';
+      el('sa').textContent = stats.x; el('sd').textContent = stats.d; el('sb').textContent = stats.o;
+      el('streak').textContent = cpuMode ? streak : '–';
+      var b = GOB.getBest('ttt'); el('best').textContent = b || 0;
+    }
+
+    function newRound() {
+      clearTimeout(timer);
+      board = new Array(9).fill(null); over = false; turn = starter;
+      cells.forEach(function (c, i) { c.textContent = ''; c.className = 'cell'; c.disabled = false; c.setAttribute('aria-label', 'Square ' + (i + 1) + ', empty'); });
+      againBtn.hidden = true;
+      labels();
+      if (cpuMode && turn === 'O') { setStatus('Computer is thinking…'); timer = setTimeout(cpuMove, 500); }
+      else setStatus(cpuMode ? 'Your turn (✕)' : 'Player ' + (turn === 'X' ? '✕' : '◯') + "'s turn");
+    }
+
+    function mark(i, p) {
+      board[i] = p;
+      cells[i].textContent = p === 'X' ? 'X' : 'O';
+      cells[i].classList.add(p === 'X' ? 'x' : 'o');
+      cells[i].setAttribute('aria-label', 'Square ' + (i + 1) + ', ' + (p === 'X' ? 'cross' : 'circle'));
+      cells[i].disabled = true;
+      var w = winner(board);
+      if (w) return finish(w);
+      turn = p === 'X' ? 'O' : 'X';
+      if (cpuMode && turn === 'O') { setStatus('Computer is thinking…'); timer = setTimeout(cpuMove, 450); }
+      else setStatus(cpuMode ? 'Your turn (✕)' : 'Player ' + (turn === 'X' ? '✕' : '◯') + "'s turn");
+    }
+    function cpuMove() { if (!over) mark(cpuPick(), 'O'); }
+    function humanMove(i) {
+      if (over || board[i]) return;
+      if (cpuMode && turn !== 'X') return;
+      mark(i, turn);
+    }
+
+    function finish(w) {
+      over = true;
+      cells.forEach(function (c) { c.disabled = true; });
+      if (w.p === 'draw') {
+        stats.d++; setStatus("It's a draw!");
+      } else {
+        w.line.forEach(function (i) { cells[i].classList.add('win'); });
+        if (w.p === 'X') stats.x++; else stats.o++;
+        if (cpuMode) {
+          if (w.p === 'X') { streak++; GOB.saveBest('ttt', streak); setStatus('You win! 🎉'); }
+          else { streak = 0; setStatus('Computer wins. Try again!'); }
+        } else setStatus('Player ' + (w.p === 'X' ? '✕' : '◯') + ' wins! 🎉');
+      }
+      starter = starter === 'X' ? 'O' : 'X';
+      labels();
+      againBtn.hidden = false; againBtn.focus();
+    }
+
+    function setMode(cpu) {
+      cpuMode = cpu; stats = { x: 0, d: 0, o: 0 }; streak = 0; starter = 'X';
+      modeCpu.setAttribute('aria-pressed', cpu); modeTwo.setAttribute('aria-pressed', !cpu);
+      levelEl.style.display = cpu ? '' : 'none';
+      newRound();
+    }
+
+    againBtn.addEventListener('click', newRound);
+    modeCpu.addEventListener('click', function () { setMode(true); });
+    modeTwo.addEventListener('click', function () { setMode(false); });
+    levelEl.addEventListener('change', function () { stats = { x: 0, d: 0, o: 0 }; streak = 0; starter = 'X'; newRound(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.target && e.target.tagName === 'SELECT') return;
+      if (e.key >= '1' && e.key <= '9') { humanMove(Number(e.key) - 1); }
+      else if ((e.key === 'Enter' || e.key === ' ') && over && document.activeElement !== againBtn) { e.preventDefault(); newRound(); }
+    });
+
+    window.__ttt = { winner: winner, get board() { return board; }, set cpuMode(v) { cpuMode = v; }, newRound: newRound, cpuPick: cpuPick, level: levelEl };
+    newRound();
+  })();
+  </script>
+</body>
+</html>

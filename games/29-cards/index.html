@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>29 Cards — Gamers of Bangladesh</title>
+  <meta name="description" content="Play 29, the classic South Asian trick-taking card game, against three computer players. Bid, pick trump and win with your partner.">
+  <meta name="theme-color" content="#0b0f0d">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <style>
+    .t29 { display: flex; flex-direction: column; gap: 8px; padding: 10px; touch-action: manipulation; background: radial-gradient(circle at 50% 38%, #0f6a43, #093524); }
+    .info { font-size: 13px; line-height: 1.5; text-align: center; color: #d7efe2; min-height: 2.9em; }
+    .info b { color: var(--yellow); }
+    .tbl { display: grid; grid-template-columns: 62px 1fr 62px; grid-template-rows: auto 186px; gap: 6px; align-items: center; }
+    .seat { text-align: center; font-size: 12px; color: #d7efe2; min-width: 0; }
+    .seat .nm { font-weight: 700; display: block; }
+    .seat.turn .nm { color: var(--yellow); }
+    .seat.us .nm { color: #7ddc9e; }
+    .seat .tag { display: inline-block; margin-left: 4px; padding: 1px 5px; border-radius: 4px; background: var(--yellow); color: #111; font-size: 10px; font-weight: 700; }
+    .seat.n { grid-column: 1 / -1; }
+    .seat.w { grid-column: 1; grid-row: 2; } .seat.e { grid-column: 3; grid-row: 2; }
+    .backs { display: flex; justify-content: center; margin-top: 3px; }
+    .backs .pc { width: 22px; height: 31px; margin-left: -13px; border-radius: 4px; }
+    .backs .pc:first-child { margin-left: 0; }
+    .seat.w .backs, .seat.e .backs { flex-direction: column; align-items: center; }
+    .seat.w .backs .pc, .seat.e .backs .pc { margin-left: 0; margin-top: -21px; }
+    .seat.w .backs .pc:first-child, .seat.e .backs .pc:first-child { margin-top: 0; }
+    .ctr { grid-column: 2; grid-row: 2; position: relative; height: 186px; }
+    .slot { position: absolute; }
+    .slot.s { left: 50%; bottom: 0; transform: translateX(-50%); } .slot.n { left: 50%; top: 0; transform: translateX(-50%); }
+    .slot.w { left: 2px; top: 50%; transform: translateY(-50%); } .slot.e { right: 2px; top: 50%; transform: translateY(-50%); }
+    .slot .pc.win { box-shadow: 0 0 0 3px var(--yellow), 0 0 18px rgba(255, 204, 51, .8); }
+    .pc {
+      width: 46px; height: 64px; padding: 0; border-radius: 7px; position: relative; flex: none;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+      background: #fffdf5; color: #14181a; border: 1px solid #b9b9b0; font-weight: 700; font-size: 15px; line-height: 1;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, .4); font-family: 'Inter', system-ui, sans-serif;
+    }
+    .pc.red { color: #c4162a; }
+    .pc .s { font-size: 21px; }
+    .pc.back { background: repeating-linear-gradient(45deg, #00a86b 0 5px, #006b44 5px 10px); border: 2px solid #fff; }
+    .hand { display: flex; justify-content: center; padding: 14px 0 4px; min-height: 86px; }
+    .hand .pc { margin-left: -13px; cursor: default; transition: transform .12s ease; }
+    .hand .pc:first-child { margin-left: 0; }
+    .hand .pc.no { filter: brightness(.55) saturate(.7); }
+    .hand .pc.ok { cursor: pointer; transform: translateY(-8px); }
+    .hand .pc.ok:hover, .hand .pc.ok:focus-visible { transform: translateY(-16px); z-index: 2; }
+    .prompt { text-align: center; font-weight: 600; font-size: 14px; min-height: 1.6em; color: #fff; }
+    .ctl { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
+    .ctl[hidden] { display: none; }
+    .ctl button { min-height: 44px; min-width: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font-weight: 700; font-size: 15px; cursor: pointer; }
+    .ctl button.go { background: var(--green); color: #06130d; border-color: var(--green); }
+    .ctl button.suit { font-size: 26px; background: #fffdf5; color: #14181a; min-width: 56px; }
+    .ctl button.suit.red { color: #c4162a; }
+    .ctl .val { min-width: 46px; text-align: center; font-family: var(--pixel); font-size: 16px; color: var(--yellow); }
+    .rules { max-width: 560px; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 4px 14px; font-size: 14px; color: var(--muted); }
+    .rules summary { cursor: pointer; padding: 10px 0; color: var(--text); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+    .rules ul { padding: 0 0 12px 18px; display: grid; gap: 6px; }
+    .overlay .sum { max-width: 340px; font-size: 14px; color: var(--text); line-height: 1.6; }
+    @media (min-width: 520px) { .hand .pc { margin-left: -6px; } .tbl { grid-template-columns: 90px 1fr 90px; } }
+    @media (prefers-reduced-motion: reduce) { .hand .pc { transition: none; } }
+  </style>
+</head>
+<body class="game-page" data-game="twentynine">
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="../../">GAMERS OF <span>BANGLADESH</span></a>
+      <a class="nav-link" href="../../#games">← All games</a>
+    </div>
+  </header>
+
+  <main class="game-main">
+    <h1 class="game-title">♠ 29 CARDS ♥</h1>
+    <div class="hud">
+      <span class="pill">YOUR TEAM <b id="gpA">0</b></span>
+      <span class="pill">THEM <b id="gpB">0</b></span>
+      <span class="pill">BEST BID <b id="best">0</b></span>
+    </div>
+
+    <div class="stage t29" id="stage" style="max-width:560px">
+      <div class="info" id="info" aria-live="polite"></div>
+      <div class="tbl">
+        <div class="seat n" id="seat2"></div>
+        <div class="seat w" id="seat1"></div>
+        <div class="ctr" id="ctr"></div>
+        <div class="seat e" id="seat3"></div>
+      </div>
+      <div class="prompt" id="prompt" role="status" aria-live="polite"></div>
+      <div class="ctl" id="ctl" hidden></div>
+      <div class="hand" id="hand" aria-label="Your hand"></div>
+      <div class="overlay" id="overlay" hidden>
+        <h2 id="ovTitle"></h2>
+        <p class="sum" id="ovText"></p>
+        <button class="btn" id="ovBtn">NEXT HAND</button>
+      </div>
+    </div>
+
+    <button class="btn secondary" id="newMatch">NEW MATCH</button>
+
+    <details class="rules">
+      <summary>How to play</summary>
+      <ul>
+        <li><b>Teams:</b> you and your Partner (opposite) against West and East. 32 cards (7 to Ace), 4 players, 8 tricks per hand.</li>
+        <li><b>Card order</b> (high → low): J, 9, A, 10, K, Q, 8, 7. <b>Points:</b> J = 3, 9 = 2, A = 1, 10 = 1. The last trick is worth 1 more, so each hand has 29 points in total.</li>
+        <li><b>Bidding:</b> you see 4 cards first. Bid how many points your team will win (16–29) or pass. The highest bidder picks the trump suit, then the other 4 cards are dealt.</li>
+        <li><b>Play:</b> follow the led suit if you can. If you can't, you may play any card; a trump card beats any other suit. Highest trump wins, otherwise the highest card of the led suit. The winner leads next.</li>
+        <li><b>Scoring:</b> if the bidding team wins at least its bid it scores +1 game point, otherwise −1. First team to +5 wins the match; −5 loses it.</li>
+        <li><b>Simplified here:</b> the trump suit is announced openly (the traditional game keeps it hidden until needed), and there are no pairs, doubles or redoubles.</li>
+      </ul>
+    </details>
+  </main>
+
+  <script src="../../assets/common.js"></script>
+  <script>
+  (function () {
+    var SUITS = ['♠', '♥', '♣', '♦'], SNAME = { '♠': 'Spades', '♥': 'Hearts', '♣': 'Clubs', '♦': 'Diamonds' };
+    var RANKS = ['7', '8', '9', '10', 'J', 'Q', 'K', 'A'], RNAME = { A: 'Ace', K: 'King', Q: 'Queen', J: 'Jack' };
+    var STR = { J: 8, '9': 7, A: 6, '10': 5, K: 4, Q: 3, '8': 2, '7': 1 };
+    var PT = { J: 3, '9': 2, A: 1, '10': 1, K: 0, Q: 0, '8': 0, '7': 0 };
+    var NAMES = ['You', 'West', 'Partner', 'East'];
+    var $ = function (id) { return document.getElementById(id); };
+    var timers = [], FAST = false, AUTO = false, HOOK = null;      // FAST/AUTO/HOOK are test hooks
+    var S;
+
+    function later(fn, ms) { timers.push(setTimeout(fn, FAST ? 0 : ms)); }
+    function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+    function team(s) { return s % 2; }
+    function red(c) { return c.s === '♥' || c.s === '♦'; }
+    function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+    function sortHand(h) { h.sort(function (a, b) { return SUITS.indexOf(a.s) - SUITS.indexOf(b.s) || STR[b.r] - STR[a.r]; }); }
+    function cardName(c) { return (RNAME[c.r] || c.r) + ' of ' + SNAME[c.s]; }
+    function ptsIn(list) { return list.reduce(function (n, x) { return n + PT[(x.card || x).r]; }, 0); }
+
+    /* ------------------------------------------------------------ rules */
+    function beats(c, w) {                       // would card c beat card w in the current trick?
+      var ct = c.s === S.trump, wt = w.s === S.trump;
+      if (ct && !wt) return true;
+      if (!ct && wt) return false;
+      return c.s === w.s && STR[c.r] > STR[w.r];
+    }
+    function legal(seat) {
+      var h = S.hands[seat];
+      if (!S.trick.length) return h.slice();
+      var led = S.trick[0].card.s, f = h.filter(function (c) { return c.s === led; });
+      return f.length ? f : h.slice();
+    }
+    function trickWinner() {
+      var best = 0;
+      for (var i = 1; i < S.trick.length; i++) if (beats(S.trick[i].card, S.trick[best].card)) best = i;
+      return S.trick[best];
+    }
+
+    /* ------------------------------------------------------------ computer players */
+    function handInfo(h) {
+      var pts = 0, jacks = 0, nines = 0, cnt = {};
+      h.forEach(function (c) { pts += PT[c.r]; if (c.r === 'J') jacks++; if (c.r === '9') nines++; cnt[c.s] = (cnt[c.s] || 0) + 1; });
+      return { pts: pts, jacks: jacks, nines: nines, maxS: Math.max.apply(null, SUITS.map(function (s) { return cnt[s] || 0; })) };
+    }
+    function aiBid(seat) {                       // 0 = pass
+      var i = handInfo(S.hands[seat]);
+      var est = 13 + i.pts + 1.5 * i.jacks + 0.5 * i.nines + (i.maxS >= 3 ? (i.maxS - 2) * 2 : 0);
+      if (S.bid.seat >= 0 && team(S.bid.seat) === team(seat)) est -= 3;       // partner already holds the bid
+      var min = Math.max(16, S.bid.high + 1), want = Math.floor(est + Math.random() * 2.5 - 0.5);
+      if (want < min) return 0;
+      return Math.min(29, Math.min(want, min + (Math.random() < 0.35 ? 1 : 0)));
+    }
+    function aiTrump(seat) {
+      var best = SUITS[0], bs = -1;
+      SUITS.forEach(function (s) {
+        var sc = 0;
+        S.hands[seat].forEach(function (c) { if (c.s === s) sc += 3 + STR[c.r]; });
+        if (sc > bs) { bs = sc; best = s; }
+      });
+      return best;
+    }
+    function isBoss(c, hand) {                   // no higher card of this suit can still be out there
+      return RANKS.filter(function (r) { return STR[r] > STR[c.r]; }).every(function (r) {
+        return S.played[r + c.s] || hand.some(function (x) { return x.r === r && x.s === c.s; });
+      });
+    }
+    function weakest(list) {                     // prefer non-trump, fewest points, lowest rank
+      return list.slice().sort(function (a, b) { return (a.s === S.trump) - (b.s === S.trump) || PT[a.r] - PT[b.r] || STR[a.r] - STR[b.r]; })[0];
+    }
+    function aiPlay(seat) {
+      var hand = S.hands[seat], L = legal(seat);
+      if (L.length === 1) return L[0];
+      var tm = team(seat), bidTeam = team(S.bidder);
+      if (!S.trick.length) {                     // leading
+        var bosses = L.filter(function (c) { return isBoss(c, hand); });
+        var nonTrumpBoss = bosses.filter(function (c) { return c.s !== S.trump; }).sort(function (a, b) { return PT[b.r] - PT[a.r] || STR[b.r] - STR[a.r]; });
+        if (tm === bidTeam) {
+          var tb = bosses.filter(function (c) { return c.s === S.trump; });
+          if (tb.length) return tb[0];
+        }
+        if (nonTrumpBoss.length) return nonTrumpBoss[0];
+        var nt = L.filter(function (c) { return c.s !== S.trump; }), pool = nt.length ? nt : L, counts = {};
+        pool.forEach(function (c) { counts[c.s] = (counts[c.s] || 0) + 1; });
+        var suit = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; })[0];
+        return weakest(pool.filter(function (c) { return c.s === suit; }));
+      }
+      var win = trickWinner(), last = S.trick.length === 3, tp = ptsIn(S.trick);
+      if (team(win.seat) === tm) {               // partner is winning
+        if (last || isBoss(win.card, hand)) {    // safe: feed points
+          return L.slice().sort(function (a, b) { return PT[b.r] - PT[a.r] || (a.s === S.trump) - (b.s === S.trump) || STR[a.r] - STR[b.r]; })[0];
+        }
+        return weakest(L);
+      }
+      var winners = L.filter(function (c) { return beats(c, win.card); });
+      if (winners.length) {
+        var cutting = winners[0].s === S.trump && S.trick[0].card.s !== S.trump;
+        if (!cutting || tp > 0 || last) return winners.sort(function (a, b) { return STR[a.r] - STR[b.r]; })[0];
+      }
+      return weakest(L);
+    }
+
+    /* ------------------------------------------------------------ flow */
+    function newMatch() {
+      clearTimers();
+      S = { gp: [0, 0], dealer: Math.floor(Math.random() * 4), phase: 'idle', hands: [[], [], [], []], trick: [], played: {}, pts: [0, 0], bid: { high: 0, seat: -1, passed: [0, 0, 0, 0], turn: 0 }, trump: null, bidder: -1, trickNo: 0, turn: 0, bidVal: 16, msg: '', winSeat: -1, dealt2: [] };
+      $('overlay').hidden = true;
+      dealHand();
+    }
+    function dealHand() {
+      clearTimers();
+      var deck = [];
+      SUITS.forEach(function (s) { RANKS.forEach(function (r) { deck.push({ s: s, r: r }); }); });
+      shuffle(deck);
+      S.hands = [0, 1, 2, 3].map(function (i) { return deck.slice(i * 4, i * 4 + 4); });
+      S.dealt2 = [0, 1, 2, 3].map(function (i) { return deck.slice(16 + i * 4, 20 + i * 4); });
+      S.hands.forEach(sortHand);
+      S.trick = []; S.played = {}; S.pts = [0, 0]; S.trump = null; S.bidder = -1; S.trickNo = 0; S.winSeat = -1;
+      S.bid = { high: 0, seat: -1, passed: [0, 0, 0, 0], turn: (S.dealer + 1) % 4 };
+      S.phase = 'bidding'; S.bidVal = 16;
+      S.msg = '';
+      $('overlay').hidden = true;
+      bidStep();
+    }
+    function remaining() { return [0, 1, 2, 3].filter(function (i) { return !S.bid.passed[i]; }); }
+    function bidStep() {
+      var rem = remaining();
+      if (rem.length === 0) {
+        S.msg = 'Everyone passed — redealing.'; render();
+        S.dealer = (S.dealer + 1) % 4;
+        return later(dealHand, 1400);
+      }
+      if ((rem.length === 1 && S.bid.seat === rem[0]) || S.bid.high === 29) return bidDone();
+      var seat = S.bid.turn;
+      S.msg = seat === 0 ? 'Your bid.' : NAMES[seat] + ' is thinking…';
+      S.bidVal = Math.max(16, S.bid.high + 1);
+      render();
+      if (seat === 0 && !AUTO) return;
+      later(function () { applyBid(seat, aiBid(seat)); }, 800);
+    }
+    function applyBid(seat, v) {
+      if (v === 0) { S.bid.passed[seat] = 1; S.msg = NAMES[seat] + ' passes.'; }
+      else { S.bid.high = v; S.bid.seat = seat; S.msg = NAMES[seat] + ' bids ' + v + '.'; }
+      var n = seat;
+      for (var k = 0; k < 4; k++) { n = (n + 1) % 4; if (!S.bid.passed[n]) break; }
+      S.bid.turn = n;
+      render();
+      later(bidStep, 700);
+    }
+    function bidDone() {
+      S.bidder = S.bid.seat; S.phase = 'trump';
+      if (S.bidder === 0 && !AUTO) { S.msg = 'You won the bid at ' + S.bid.high + '. Choose the trump suit.'; return render(); }
+      S.msg = NAMES[S.bidder] + ' wins the bid at ' + S.bid.high + '.';
+      render();
+      later(function () { setTrump(aiTrump(S.bidder)); }, 1000);
+    }
+    function setTrump(suit) {
+      S.trump = suit;
+      S.hands.forEach(function (h, i) { S.hands[i] = h.concat(S.dealt2[i]); sortHand(S.hands[i]); });
+      S.phase = 'playing'; S.trickNo = 0;
+      S.turn = (S.dealer + 1) % 4;
+      S.msg = NAMES[S.bidder] + ' chose ' + SNAME[suit] + ' ' + suit + ' as trump.';
+      render();
+      later(playTurn, 900);
+    }
+    function playTurn() {
+      if (S.phase !== 'playing') return;
+      render();
+      if (S.turn === 0 && !AUTO) return;
+      later(function () { playCard(S.turn, aiPlay(S.turn)); }, 750);
+    }
+    function playCard(seat, card) {
+      if (HOOK) HOOK(seat, card, legal(seat), S);
+      var h = S.hands[seat], idx = -1;
+      h.forEach(function (c, i) { if (c.s === card.s && c.r === card.r) idx = i; });
+      if (idx < 0) throw new Error('card not in hand');
+      h.splice(idx, 1);
+      S.trick.push({ seat: seat, card: card }); S.played[card.r + card.s] = 1;
+      if (S.trick.length < 4) { S.turn = (seat + 1) % 4; return playTurn(); }
+      var w = trickWinner();
+      S.winSeat = w.seat; S.trickNo++;
+      var pts = ptsIn(S.trick) + (S.trickNo === 8 ? 1 : 0);
+      S.pts[team(w.seat)] += pts;
+      S.msg = NAMES[w.seat] + (w.seat === 0 ? ' win ' : ' wins ') + 'the trick' + (pts ? ' (+' + pts + ')' : '') + '.';
+      S.phase = 'trickEnd'; render();
+      later(function () {
+        S.trick = []; S.winSeat = -1;
+        if (S.trickNo === 8) return endHand();
+        S.phase = 'playing'; S.turn = w.seat; playTurn();
+      }, 1300);
+    }
+    function endHand() {
+      var bt = team(S.bidder), made = S.pts[bt] >= S.bid.high, mine = bt === 0;
+      S.gp[bt] += made ? 1 : -1;
+      if (made && mine) GOB.saveBest('twentynine', S.bid.high);
+      S.phase = 'handEnd';
+      var who = mine ? 'Your team' : 'West & East';
+      var text = who + ' bid ' + S.bid.high + ' and won ' + S.pts[bt] + ' — ' + (made ? 'contract made (+1)' : 'contract failed (−1)') + '. Final points: You & Partner ' + S.pts[0] + ', West & East ' + S.pts[1] + '.';
+      var matchOver = S.gp[0] >= 5 || S.gp[1] <= -5 ? 'win' : (S.gp[1] >= 5 || S.gp[0] <= -5 ? 'lose' : null);
+      render();
+      var ov = $('overlay');
+      $('ovTitle').textContent = matchOver ? (matchOver === 'win' ? 'YOU WON THE MATCH!' : 'MATCH LOST') : (made === mine ? 'GOOD HAND!' : 'HAND OVER');
+      $('ovText').textContent = text;
+      $('ovBtn').textContent = matchOver ? 'NEW MATCH' : 'NEXT HAND';
+      $('ovBtn').onclick = function () { if (matchOver) newMatch(); else { S.dealer = (S.dealer + 1) % 4; dealHand(); } };
+      ov.hidden = false; $('ovBtn').focus();
+      if (AUTO) later(function () { $('ovBtn').click(); }, 0);
+    }
+
+    /* ------------------------------------------------------------ human actions */
+    function humanBid(v) { if (S.phase === 'bidding' && S.bid.turn === 0) applyBid(0, v); }
+    function humanTrump(s) { if (S.phase === 'trump' && S.bidder === 0) setTrump(s); }
+    function humanPlay(card) {
+      if (S.phase !== 'playing' || S.turn !== 0) return;
+      var ok = legal(0).some(function (c) { return c.s === card.s && c.r === card.r; });
+      if (ok) playCard(0, card);
+    }
+
+    /* ------------------------------------------------------------ rendering */
+    function cardEl(c, cls) {
+      return '<span class="pc ' + (red(c) ? 'red ' : '') + (cls || '') + '"><span class="r">' + c.r + '</span><span class="s">' + c.s + '</span></span>';
+    }
+    function backs(n) { var o = ''; for (var i = 0; i < n; i++) o += '<span class="pc back"></span>'; return '<div class="backs">' + o + '</div>'; }
+    function seatHTML(i) {
+      var tag = S.bidder === i ? '<span class="tag">BID ' + S.bid.high + '</span>' : (S.dealer === i ? '<span class="tag" style="background:#cde">D</span>' : '');
+      var turn = (S.phase === 'playing' && S.turn === i) || (S.phase === 'bidding' && S.bid.turn === i);
+      var nm = NAMES[i] + (S.phase === 'bidding' && S.bid.passed[i] ? ' (pass)' : '');
+      return '<span class="nm">' + nm + tag + '</span>' + backs(S.hands[i].length);
+    }
+    function render() {
+      var i;
+      $('gpA').textContent = (S.gp[0] > 0 ? '+' : '') + S.gp[0]; $('gpB').textContent = (S.gp[1] > 0 ? '+' : '') + S.gp[1];
+      $('best').textContent = GOB.getBest('twentynine') || 0;
+
+      // info bar
+      var info;
+      if (S.phase === 'bidding' || S.phase === 'idle') info = S.bid.seat >= 0 ? 'Highest bid: <b>' + S.bid.high + '</b> by <b>' + NAMES[S.bid.seat] + '</b>' : 'No bids yet · dealer: ' + NAMES[S.dealer];
+      else if (S.phase === 'trump') info = 'Bid <b>' + S.bid.high + '</b> by <b>' + NAMES[S.bidder] + '</b>';
+      else {
+        var bt = team(S.bidder);
+        info = 'Bid <b>' + S.bid.high + '</b> by <b>' + NAMES[S.bidder] + '</b> · Trump <b style="color:' + (S.trump === '♥' || S.trump === '♦' ? '#ff6b7a' : '#fff') + '">' + S.trump + '</b><br>' +
+          'Points: You &amp; Partner <b>' + S.pts[0] + '</b> · West &amp; East <b>' + S.pts[1] + '</b> · tricks ' + S.trickNo + '/8';
+      }
+      $('info').innerHTML = info;
+
+      // seats
+      [1, 2, 3].forEach(function (s) {
+        var el = $('seat' + s);
+        el.className = 'seat ' + ['', 'w', 'n', 'e'][s] + ((S.phase === 'playing' && S.turn === s) || (S.phase === 'bidding' && S.bid.turn === s) ? ' turn' : '') + (s === 2 ? ' us' : '');
+        el.innerHTML = seatHTML(s);
+      });
+
+      // trick area
+      var pos = ['s', 'w', 'n', 'e'], ctr = '';
+      S.trick.forEach(function (t) { ctr += '<div class="slot ' + pos[t.seat] + '">' + cardEl(t.card, t.seat === S.winSeat && S.phase === 'trickEnd' ? 'win' : '') + '</div>'; });
+      $('ctr').innerHTML = ctr;
+
+      // prompt
+      var prompt = S.msg;
+      if (S.phase === 'playing' && S.turn === 0) prompt = 'Your turn — play a card.';
+      $('prompt').textContent = prompt;
+
+      // controls
+      var ctl = $('ctl'), c = '';
+      if (S.phase === 'bidding' && S.bid.turn === 0 && !AUTO) {
+        var min = Math.max(16, S.bid.high + 1), pts = handInfo(S.hands[0]).pts;
+        c = '<span style="font-size:12px;color:#d7efe2;flex-basis:100%;text-align:center">Your 4 cards hold <b style="color:#ffcc33">' + pts + '</b> points</span>' +
+          '<button id="bMinus" aria-label="Lower bid">−</button><span class="val" id="bVal">' + S.bidVal + '</span><button id="bPlus" aria-label="Raise bid">+</button>' +
+          '<button class="go" id="bGo">BID</button><button id="bPass">PASS</button>';
+        if (min > 29) c = '<button id="bPass">PASS</button>';
+      } else if (S.phase === 'trump' && S.bidder === 0 && !AUTO) {
+        SUITS.forEach(function (s) { c += '<button class="suit ' + (s === '♥' || s === '♦' ? 'red' : '') + '" data-suit="' + s + '" aria-label="' + SNAME[s] + '">' + s + '</button>'; });
+      }
+      ctl.innerHTML = c; ctl.hidden = !c;
+      if ($('bMinus')) {
+        var minB = Math.max(16, S.bid.high + 1);
+        $('bMinus').onclick = function () { S.bidVal = Math.max(minB, S.bidVal - 1); $('bVal').textContent = S.bidVal; };
+        $('bPlus').onclick = function () { S.bidVal = Math.min(29, S.bidVal + 1); $('bVal').textContent = S.bidVal; };
+        $('bGo').onclick = function () { humanBid(S.bidVal); };
+      }
+      if ($('bPass')) $('bPass').onclick = function () { humanBid(0); };
+      Array.prototype.forEach.call(ctl.querySelectorAll('[data-suit]'), function (b) { b.onclick = function () { humanTrump(b.getAttribute('data-suit')); }; });
+
+      // my hand
+      var hand = $('hand'), h = '', can = S.phase === 'playing' && S.turn === 0, lg = can ? legal(0) : [];
+      S.hands[0].forEach(function (cd, idx) {
+        var ok = can && lg.some(function (x) { return x.s === cd.s && x.r === cd.r; });
+        h += '<button class="pc ' + (red(cd) ? 'red ' : '') + (can ? (ok ? 'ok' : 'no') : '') + '" data-i="' + idx + '" ' + (ok ? '' : 'disabled') + ' aria-label="' + cardName(cd) + (can && !ok ? ' (not allowed)' : '') + '"><span class="r">' + cd.r + '</span><span class="s">' + cd.s + '</span></button>';
+      });
+      hand.innerHTML = h;
+      Array.prototype.forEach.call(hand.querySelectorAll('button'), function (b) {
+        b.onclick = function () { humanPlay(S.hands[0][Number(b.getAttribute('data-i'))]); };
+      });
+    }
+
+    $('newMatch').addEventListener('click', newMatch);
+    window.__t29 = { get S() { return S; }, newMatch: newMatch, setFast: function (auto) { FAST = true; AUTO = !!auto; }, setHook: function (f) { HOOK = f; }, aiPlay: aiPlay, legal: legal, PT: PT };
+    newMatch();
+  })();
+  </script>
+</body>
+</html>

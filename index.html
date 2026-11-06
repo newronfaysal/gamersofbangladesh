@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gamers of Bangladesh — Free Mini Games</title>
-  <meta name="description" content="Play free browser mini-games made in Bangladesh: Rickshaw Rush, Mango Mania, Sundarbans Tap and Desh Memory. No download, works on mobile.">
+  <meta name="description" content="Play free browser games made in Bangladesh: runner, slingshot, card and puzzle games. No download, works on mobile.">
   <meta name="theme-color" content="#0b0f0d">
   <meta property="og:title" content="Gamers of Bangladesh — Free Mini Games">
   <meta property="og:description" content="Quick, fun browser games to pass time. Play on your phone or PC.">
@@ -105,9 +105,25 @@
         </div>
       </a>
 
-      <a class="card reveal" href="games/mango-mania/" data-game="mango" data-name="Mango Mania"
-         style="--accent:#ffc233;--accent-rgb:255,194,51;--d:.08s" aria-labelledby="t-mango" aria-describedby="d-mango">
+      <a class="card reveal" href="games/dhaka-dash/" data-game="dash" data-name="Dhaka Dash"
+         style="--accent:#ff8a3d;--accent-rgb:255,138,61;--d:.08s" aria-labelledby="t-dash" aria-describedby="d-dash">
         <span class="badge">NEW</span>
+        <div class="thumb" aria-hidden="true"><div class="pit"><canvas class="sprite" data-sprite="runner" data-scale="5"></canvas></div></div>
+        <div class="body">
+          <h3 id="t-dash">Dhaka Dash</h3>
+          <p id="d-dash">Sprint through the alleys of Old Dhaka. Swipe to dodge, jump and slide — and grab the taka!</p>
+          <div class="meta">
+            <span class="stats">
+              <span>Best <span class="best" data-best="dash">—</span></span>
+              <span title="Estimated play time"><span aria-hidden="true">⏱</span> ~3 min</span>
+            </span>
+            <span class="play" aria-hidden="true">PLAY</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card reveal" href="games/mango-mania/" data-game="mango" data-name="Mango Mania"
+         style="--accent:#ffc233;--accent-rgb:255,194,51;--d:.16s" aria-labelledby="t-mango" aria-describedby="d-mango">
         <div class="thumb" aria-hidden="true"><div class="pit"><canvas class="sprite" data-sprite="mango" data-scale="5"></canvas></div></div>
         <div class="body">
           <h3 id="t-mango">Mango Mania</h3>
@@ -122,8 +138,25 @@
         </div>
       </a>
 
+      <a class="card reveal" href="games/kathal-launch/" data-game="sling" data-name="Kathal Launch"
+         style="--accent:#7ddc4a;--accent-rgb:125,220,74;--d:.24s" aria-labelledby="t-sling" aria-describedby="d-sling">
+        <span class="badge">NEW</span>
+        <div class="thumb" aria-hidden="true"><div class="pit"><canvas class="sprite" data-sprite="kathal" data-scale="5"></canvas></div></div>
+        <div class="body">
+          <h3 id="t-sling">Kathal Launch</h3>
+          <p id="d-sling">Sling jackfruits to topple the towers and send the cheeky crows flying. Five levels of mischief.</p>
+          <div class="meta">
+            <span class="stats">
+              <span>Best <span class="best" data-best="sling">—</span></span>
+              <span title="Estimated play time"><span aria-hidden="true">⏱</span> ~5 min</span>
+            </span>
+            <span class="play" aria-hidden="true">PLAY</span>
+          </div>
+        </div>
+      </a>
+
       <a class="card reveal" href="games/sundarbans-tap/" data-game="tiger" data-name="Sundarbans Tap"
-         style="--accent:#2dd4bf;--accent-rgb:45,212,191;--d:.16s" aria-labelledby="t-tiger" aria-describedby="d-tiger">
+         style="--accent:#2dd4bf;--accent-rgb:45,212,191;--d:0s" aria-labelledby="t-tiger" aria-describedby="d-tiger">
         <span class="badge hot">HOT</span>
         <div class="thumb" aria-hidden="true"><div class="pit"><canvas class="sprite" data-sprite="tiger" data-scale="5"></canvas></div></div>
         <div class="body">
@@ -139,9 +172,25 @@
         </div>
       </a>
 
-      <a class="card reveal" href="games/desh-memory/" data-game="memory" data-name="Desh Memory"
-         style="--accent:#a78bfa;--accent-rgb:167,139,250;--d:.24s" aria-labelledby="t-memory" aria-describedby="d-memory">
+      <a class="card reveal" href="games/tic-tac-toe/" data-game="ttt" data-name="Tic Tac Toe"
+         style="--accent:#38bdf8;--accent-rgb:56,189,248;--d:.08s" aria-labelledby="t-ttt" aria-describedby="d-ttt">
         <span class="badge">NEW</span>
+        <div class="thumb" aria-hidden="true"><div class="pit"><canvas class="sprite" data-sprite="tictactoe" data-scale="5"></canvas></div></div>
+        <div class="body">
+          <h3 id="t-ttt">Tic Tac Toe</h3>
+          <p id="d-ttt">The classic three-in-a-row. Beat the computer on Easy, Medium or Hard, or challenge a friend.</p>
+          <div class="meta">
+            <span class="stats">
+              <span>Best <span class="best" data-best="ttt" data-unit=" wins">—</span></span>
+              <span title="Estimated play time"><span aria-hidden="true">⏱</span> ~1 min</span>
+            </span>
+            <span class="play" aria-hidden="true">PLAY</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card reveal" href="games/desh-memory/" data-game="memory" data-name="Desh Memory"
+         style="--accent:#a78bfa;--accent-rgb:167,139,250;--d:.16s" aria-labelledby="t-memory" aria-describedby="d-memory">
         <div class="thumb" aria-hidden="true"><div class="pit"><canvas class="sprite" data-sprite="memory" data-scale="5"></canvas></div></div>
         <div class="body">
           <h3 id="t-memory">Desh Memory</h3>
@@ -150,6 +199,23 @@
             <span class="stats">
               <span>Best <span class="best" data-best="memory" data-unit=" moves">—</span></span>
               <span title="Estimated play time"><span aria-hidden="true">⏱</span> ~2 min</span>
+            </span>
+            <span class="play" aria-hidden="true">PLAY</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="card reveal" href="games/29-cards/" data-game="twentynine" data-name="29 Cards"
+         style="--accent:#f472b6;--accent-rgb:244,114,182;--d:.24s" aria-labelledby="t-twentynine" aria-describedby="d-twentynine">
+        <span class="badge">NEW</span>
+        <div class="thumb" aria-hidden="true"><div class="pit"><canvas class="sprite" data-sprite="card29" data-scale="5"></canvas></div></div>
+        <div class="body">
+          <h3 id="t-twentynine">29 Cards</h3>
+          <p id="d-twentynine">Bid, pick trump and win tricks with your partner in the classic South Asian card game.</p>
+          <div class="meta">
+            <span class="stats">
+              <span>Best <span class="best" data-best="twentynine" data-unit=" pts">—</span></span>
+              <span title="Estimated play time"><span aria-hidden="true">⏱</span> ~10 min</span>
             </span>
             <span class="play" aria-hidden="true">PLAY</span>
           </div>

@@ -14,7 +14,7 @@ Static website (plain HTML/CSS/JS, no build step) with browser mini-games.
 - `assets/alpona.svg` — tile for the alpona dividers.
 - `assets/style.css` — shared theme (dark, Bangladesh green/red, Press Start 2P + Inter).
 - `assets/common.js` — `window.GOB` helpers: best scores in localStorage (`gob:best:<game>`), `GOB.load/store` (try/catch-wrapped storage), hi-DPI canvas setup. Pages with `<body data-game="<key>">` record `gob:last`.
-- `games/<name>/index.html` — one self-contained page per game: rickshaw-rush, mango-mania, sundarbans-tap, desh-memory.
+- `games/<name>/index.html` — one self-contained page per game: rickshaw-rush, dhaka-dash (pseudo-3D runner), mango-mania, kathal-launch (own box-physics slingshot), sundarbans-tap, tic-tac-toe (minimax AI), desh-memory, 29-cards (trick-taking, 3 AI players). Games expose small `window.__name` hooks that the automated checks use.
 - Use relative paths (`../../assets/...`) so pages work at any host.
 
 ## Conventions

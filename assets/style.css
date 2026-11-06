@@ -239,6 +239,29 @@ button { font: inherit; color: inherit; }
 }
 .card[data-game="memory"] .pit { top: 50%; margin-top: -33px; }
 
+.card[data-game="dash"] .thumb::after { /* road receding into the alley */
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 100px;
+  background: linear-gradient(#23262a, #3d4146); clip-path: polygon(34% 0, 66% 0, 100% 100%, 0 100%);
+}
+.card[data-game="dash"] .thumb::before { /* lane lines */
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 100px; z-index: 1;
+  background: linear-gradient(104deg, transparent 49%, rgba(255,255,255,.5) 49.6%, transparent 50.4%), linear-gradient(76deg, transparent 49.6%, rgba(255,255,255,.5) 50.2%, transparent 51%);
+  clip-path: polygon(34% 0, 66% 0, 100% 100%, 0 100%);
+}
+.card[data-game="dash"] .pit { bottom: 8px; z-index: 2; }
+
+.card[data-game="sling"] .thumb::after { /* grass */
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 24px; background: #3f8f3f; border-top: 3px solid #2f6f2f;
+}
+.card[data-game="sling"] .pit { bottom: 26px; }
+
+.card[data-game="ttt"] .pit { top: 50%; margin-top: -35px; }
+.card[data-game="twentynine"] .thumb::before {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 60px; height: 70px; margin: -35px 0 0 -30px;
+  border: 3px dashed rgba(var(--accent-rgb), 0.55); border-radius: 8px; transform: translate(46px, 6px) rotate(12deg);
+}
+.card[data-game="twentynine"] .pit { top: 50%; margin-top: -35px; }
+
 /* Hover / keyboard-focus previews (disabled by prefers-reduced-motion) */
 @media (prefers-reduced-motion: no-preference) {
   .card:hover, .card:focus-visible { transform: translateY(-5px); }
@@ -246,6 +269,10 @@ button { font: inherit; color: inherit; }
   .card:is(:hover, :focus-visible) [data-sprite="mango"] { animation: fall 1.8s ease-in infinite; }
   .card:is(:hover, :focus-visible) [data-sprite="tiger"] { animation: pop 2.2s steps(5) infinite; }
   .card:is(:hover, :focus-visible) [data-sprite="memory"] { animation: flip 1.8s ease-in-out infinite; }
+  .card:is(:hover, :focus-visible) [data-sprite="runner"] { animation: lanes 2.4s ease-in-out infinite; }
+  .card:is(:hover, :focus-visible) [data-sprite="kathal"] { animation: launch 1.6s linear infinite; }
+  .card:is(:hover, :focus-visible) [data-sprite="tictactoe"] { animation: wiggle .8s ease-in-out infinite; }
+  .card:is(:hover, :focus-visible) [data-sprite="card29"] { animation: deal 1.8s ease-out infinite; }
   .badge { animation: pulse 1.8s ease-in-out infinite; }
 }
 @keyframes drive { from { transform: translateX(calc(-50cqw - 100%)); } to { transform: translateX(calc(50cqw + 100%)); } }
@@ -267,6 +294,21 @@ button { font: inherit; color: inherit; }
   100% { transform: perspective(500px) rotateY(360deg); }
 }
 @keyframes pulse { 50% { transform: scale(1.08); } }
+@keyframes lanes {
+  0%, 100% { transform: translate(-38px, 0); } 12% { transform: translate(-38px, -30px); } 25% { transform: translate(-38px, 0); }
+  45% { transform: translate(38px, 0); } 57% { transform: translate(38px, -30px); } 70% { transform: translate(38px, 0); }
+}
+@keyframes launch {
+  0% { transform: translate(-100px, 24px) rotate(0); } 25% { transform: translate(-50px, -26px) rotate(90deg); }
+  50% { transform: translate(0, -44px) rotate(180deg); } 75% { transform: translate(50px, -26px) rotate(270deg); }
+  100% { transform: translate(100px, 24px) rotate(360deg); }
+}
+@keyframes wiggle { 0%, 100% { transform: rotate(-5deg) scale(1); } 50% { transform: rotate(5deg) scale(1.1); } }
+@keyframes deal {
+  0% { transform: translate(-90px, -50px) rotate(-60deg); opacity: 0; }
+  35%, 70% { transform: none; opacity: 1; }
+  100% { transform: translate(90px, -50px) rotate(60deg); opacity: 0; }
+}
 
 /* ===== Scroll reveal ===== */
 .js .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; transition-delay: var(--d, 0s); }

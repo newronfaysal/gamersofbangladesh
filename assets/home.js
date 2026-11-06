@@ -87,6 +87,82 @@
         '.WGGGGGGGGW.',
         '..WWWWWWWW..'
       ]
+    },
+    kathal: {
+      pal: { B: '#6b4423', G: '#3f8f2f', L: '#9be070' },
+      rows: [
+        '.....BB.....',
+        '...GGGGGG...',
+        '..GLGLGLGG..',
+        '.GLGLGLGLGG.',
+        '.GGLGLGLGLG.',
+        'GLGLGLGLGLGG',
+        'GGLGLGLGLGLG',
+        'GLGLGLGLGLGG',
+        'GGLGLGLGLGLG',
+        '.GLGLGLGLGG.',
+        '.GGLGLGLGLG.',
+        '..GGLGLGGG..',
+        '....GGGG....'
+      ]
+    },
+    runner: {
+      pal: { R: '#f42a41', S: '#c98a5a', K: '#101414', G: '#00a86b', W: '#f2efe6', B: '#2f6fd6' },
+      rows: [
+        '...RRRR...',
+        '..RRRRRR..',
+        '..SSSSSS..',
+        '..SKSSKS..',
+        '..SSSSSS..',
+        '...SSSS...',
+        '.GGWWWWGG.',
+        'S.WWWWWW.S',
+        'S.WWWWWW.S',
+        '..WWWWWW..',
+        '..BBBBBB..',
+        '.BBB..BBB.',
+        '.BBB..BBB.',
+        '.BB....BB.',
+        'KKK....KKK'
+      ]
+    },
+    tictactoe: {
+      pal: { L: '#cbd5e1', X: '#ff4d5e', O: '#2dd4bf' },
+      rows: [
+        'X..XL.OO.L....',
+        '.XX.LO..OL....',
+        '.XX.LO..OL....',
+        'X..XL.OO.L....',
+        'LLLLLLLLLLLLLL',
+        '....LX..XL.OO.',
+        '....L.XX.LO..O',
+        '....L.XX.LO..O',
+        '....LX..XL.OO.',
+        'LLLLLLLLLLLLLL',
+        '.OO.L....LX..X',
+        'O..OL....L.XX.',
+        'O..OL....L.XX.',
+        '.OO.L....LX..X'
+      ]
+    },
+    card29: {
+      pal: { K: '#1b2a24', W: '#fffdf5', R: '#f42a41' },
+      rows: [
+        '.KKKKKKKKKK.',
+        'KWWWWWWWWWWK',
+        'KWRWWWWWWWWK',
+        'KWWWWWWWWWWK',
+        'KWWRRWWRRWWK',
+        'KWRRRRRRRRWK',
+        'KWRRRRRRRRWK',
+        'KWWRRRRRRWWK',
+        'KWWWRRRRWWWK',
+        'KWWWWRRWWWWK',
+        'KWWWWWWWWWWK',
+        'KWWWWWWWWRWK',
+        'KWWWWWWWWWWK',
+        '.KKKKKKKKKK.'
+      ]
     }
   };
 
