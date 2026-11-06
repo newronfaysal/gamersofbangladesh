@@ -11,14 +11,26 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Bangla heading font, subset to just the characters used in the hero (a few KB) -->
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@600&text=%E0%A6%97%E0%A7%87%E0%A6%AE%E0%A6%BE%E0%A6%B0%E0%A6%B8%20%E0%A6%85%E0%A6%AB%20%E0%A6%AC%E0%A6%BE%E0%A6%82%E0%A6%B2%E0%A6%BE%E0%A6%A6%E0%A7%87%E0%A6%B6&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
+  <script>
+    document.documentElement.classList.add('js');
+    // Failsafe: if home.js never runs, don't leave scroll-reveal content hidden.
+    setTimeout(function () { if (!window.__gobHome) document.documentElement.classList.add('no-reveal'); }, 3500);
+  </script>
 </head>
 <body>
+  <a class="skip" href="#games">Skip to games</a>
+
   <header class="site-header">
     <div class="wrap">
       <a class="brand" href="./">GAMERS OF <span>BANGLADESH</span></a>
-      <a class="nav-link" href="#games">Games</a>
+      <nav class="nav" aria-label="Main">
+        <a class="nav-link opt" href="#daily">Daily</a>
+        <a class="nav-link" href="#games">Games</a>
+      </nav>
     </div>
   </header>
 
@@ -26,52 +38,139 @@
     <span aria-hidden="true">🛠️</span> This website is under maintenance. Some features may not work as expected.
   </div>
 
+  <section class="hero" aria-labelledby="hero-title">
+    <canvas id="scene" aria-hidden="true"></canvas>
+    <div class="hero-inner">
+      <h1 id="hero-title"><span>Gamers of</span> <span class="r">Bangladesh</span></h1>
+      <p class="bangla" lang="bn">গেমারস অফ বাংলাদেশ</p>
+      <p class="tagline">
+        <span class="sr-only">Free mini-games made in Bangladesh. Play on your phone or PC.</span>
+        <span aria-hidden="true"><span id="typed">Free mini-games, made in Bangladesh.</span><span class="caret"></span></span>
+      </p>
+      <div class="cta">
+        <a class="btn-lg" id="randomBtn" href="#games"><span aria-hidden="true">🎲</span> Play a random game</a>
+        <a class="btn-lg gold" id="dailyBtn" href="#daily"><span aria-hidden="true">⭐</span> Daily challenge</a>
+      </div>
+    </div>
+  </section>
+
   <main class="wrap">
-    <section class="hero">
-      <h1>PRESS START<br><span>TO PLAY</span></h1>
-      <p>Quick mini-games to pass the time. No download, no sign-up — play right here on your phone or PC.</p>
+    <a class="continue" id="continue" href="#games" hidden>
+      <canvas class="sprite" id="continueSprite" aria-hidden="true"></canvas>
+      <span class="txt">
+        <span class="eyebrow">CONTINUE PLAYING</span>
+        <span class="name" id="continueName" style="display:block"></span>
+        <span class="sub">Your best: <b class="best" id="continueBest">—</b></span>
+      </span>
+      <span class="go" aria-hidden="true">RESUME</span>
+    </a>
+
+    <section class="daily reveal" id="daily" aria-labelledby="daily-title">
+      <canvas class="sprite" id="dailySprite" aria-hidden="true"></canvas>
+      <div class="daily-body">
+        <div class="eyebrow">★ DAILY CHALLENGE</div>
+        <h2 id="daily-title">Today: <span id="dailyName">a new game every day</span></h2>
+        <p>Beat your own best score. Your best: <b class="best" id="dailyBest">—</b></p>
+      </div>
+      <div class="daily-side">
+        <div class="countdown">
+          <span id="countdown" role="timer" aria-label="Time until the next daily challenge">--:--:--</span>
+          <small>until reset · Dhaka time</small>
+        </div>
+        <a class="btn-lg gold" id="dailyPlay" href="#games">Play now</a>
+      </div>
     </section>
 
-    <h2 class="section-title" id="games">&gt; CHOOSE A GAME</h2>
+    <div class="divider reveal" id="games">
+      <span class="alpona" aria-hidden="true"></span>
+      <h2>Choose a game</h2>
+      <span class="alpona" aria-hidden="true"></span>
+    </div>
+
     <div class="grid">
-      <a class="card" href="games/rickshaw-rush/">
-        <div class="thumb" aria-hidden="true">🛺</div>
+      <a class="card reveal" href="games/rickshaw-rush/" data-game="rickshaw" data-name="Rickshaw Rush"
+         style="--accent:#ff4d5e;--accent-rgb:255,77,94;--d:0s" aria-labelledby="t-rickshaw" aria-describedby="d-rickshaw">
+        <span class="badge hot">HOT</span>
+        <div class="thumb" aria-hidden="true"><div class="pit"><canvas class="sprite" data-sprite="rickshaw" data-scale="5"></canvas></div></div>
         <div class="body">
-          <h3>RICKSHAW RUSH</h3>
-          <p>Weave through Dhaka traffic. Dodge buses and CNGs — how far can you ride?</p>
-          <div class="meta"><span>Best: <span class="best" data-best="rickshaw" data-unit="m"></span></span><span class="play">PLAY</span></div>
+          <h3 id="t-rickshaw">Rickshaw Rush</h3>
+          <p id="d-rickshaw">Weave through Dhaka traffic. Dodge buses and CNGs — how far can you ride?</p>
+          <div class="meta">
+            <span class="stats">
+              <span>Best <span class="best" data-best="rickshaw" data-unit="m">—</span></span>
+              <span title="Estimated play time"><span aria-hidden="true">⏱</span> ~2 min</span>
+            </span>
+            <span class="play" aria-hidden="true">PLAY</span>
+          </div>
         </div>
       </a>
-      <a class="card" href="games/mango-mania/">
-        <div class="thumb" aria-hidden="true">🥭</div>
+
+      <a class="card reveal" href="games/mango-mania/" data-game="mango" data-name="Mango Mania"
+         style="--accent:#ffc233;--accent-rgb:255,194,51;--d:.08s" aria-labelledby="t-mango" aria-describedby="d-mango">
+        <span class="badge">NEW</span>
+        <div class="thumb" aria-hidden="true"><div class="pit"><canvas class="sprite" data-sprite="mango" data-scale="5"></canvas></div></div>
         <div class="body">
-          <h3>MANGO MANIA</h3>
-          <p>Mango season! Catch falling mangoes in your basket — but watch out for bees.</p>
-          <div class="meta"><span>Best: <span class="best" data-best="mango"></span></span><span class="play">PLAY</span></div>
+          <h3 id="t-mango">Mango Mania</h3>
+          <p id="d-mango">Mango season! Catch falling mangoes in your basket — but watch out for bees.</p>
+          <div class="meta">
+            <span class="stats">
+              <span>Best <span class="best" data-best="mango">—</span></span>
+              <span title="Estimated play time"><span aria-hidden="true">⏱</span> ~3 min</span>
+            </span>
+            <span class="play" aria-hidden="true">PLAY</span>
+          </div>
         </div>
       </a>
-      <a class="card" href="games/sundarbans-tap/">
-        <div class="thumb" aria-hidden="true">🐅</div>
+
+      <a class="card reveal" href="games/sundarbans-tap/" data-game="tiger" data-name="Sundarbans Tap"
+         style="--accent:#2dd4bf;--accent-rgb:45,212,191;--d:.16s" aria-labelledby="t-tiger" aria-describedby="d-tiger">
+        <span class="badge hot">HOT</span>
+        <div class="thumb" aria-hidden="true"><div class="pit"><canvas class="sprite" data-sprite="tiger" data-scale="5"></canvas></div></div>
         <div class="body">
-          <h3>SUNDARBANS TAP</h3>
-          <p>Tigers are popping out of the mangroves. Tap them fast — don't tap the crocodiles!</p>
-          <div class="meta"><span>Best: <span class="best" data-best="tiger"></span></span><span class="play">PLAY</span></div>
+          <h3 id="t-tiger">Sundarbans Tap</h3>
+          <p id="d-tiger">Tigers are popping out of the mangroves. Tap them fast — don't tap the crocodiles!</p>
+          <div class="meta">
+            <span class="stats">
+              <span>Best <span class="best" data-best="tiger">—</span></span>
+              <span title="Estimated play time"><span aria-hidden="true">⏱</span> 30 sec</span>
+            </span>
+            <span class="play" aria-hidden="true">PLAY</span>
+          </div>
         </div>
       </a>
-      <a class="card" href="games/desh-memory/">
-        <div class="thumb" aria-hidden="true">🃏</div>
+
+      <a class="card reveal" href="games/desh-memory/" data-game="memory" data-name="Desh Memory"
+         style="--accent:#a78bfa;--accent-rgb:167,139,250;--d:.24s" aria-labelledby="t-memory" aria-describedby="d-memory">
+        <span class="badge">NEW</span>
+        <div class="thumb" aria-hidden="true"><div class="pit"><canvas class="sprite" data-sprite="memory" data-scale="5"></canvas></div></div>
         <div class="body">
-          <h3>DESH MEMORY</h3>
-          <p>Flip the cards and match pairs of Bangladeshi favourites in as few moves as you can.</p>
-          <div class="meta"><span>Best: <span class="best" data-best="memory" data-unit=" moves"></span></span><span class="play">PLAY</span></div>
+          <h3 id="t-memory">Desh Memory</h3>
+          <p id="d-memory">Flip the cards and match pairs of Bangladeshi favourites in as few moves as you can.</p>
+          <div class="meta">
+            <span class="stats">
+              <span>Best <span class="best" data-best="memory" data-unit=" moves">—</span></span>
+              <span title="Estimated play time"><span aria-hidden="true">⏱</span> ~2 min</span>
+            </span>
+            <span class="play" aria-hidden="true">PLAY</span>
+          </div>
         </div>
       </a>
     </div>
+
+    <div class="alpona alpona-rule reveal" aria-hidden="true"></div>
   </main>
 
   <footer class="site-footer">
-    &copy; <span data-year></span> Gamers of Bangladesh · More games coming soon
+    <div class="wrap">
+      <p class="footer-links">
+        <a class="suggest" href="https://github.com/newronfaysal/gamersofbangladesh/issues/new?title=Game%20suggestion%3A%20&amp;body=What%20game%20would%20you%20like%20to%20see%3F%0A%0A**Idea%3A**%20%0A**How%20it%20plays%3A**%20" target="_blank" rel="noopener"><span aria-hidden="true">💡</span> Suggest a game</a>
+        <a class="top" href="#">Back to top ↑</a>
+      </p>
+      <p>&copy; <span data-year></span> Gamers of Bangladesh · More games coming soon</p>
+    </div>
   </footer>
+
   <script src="assets/common.js"></script>
+  <script src="assets/home.js"></script>
 </body>
 </html>

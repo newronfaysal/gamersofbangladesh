@@ -9,13 +9,16 @@ Static website (plain HTML/CSS/JS, no build step) with browser mini-games.
 - An older, unused Cloudflare Pages project `gamersofbangladesh` (gamersofbangladesh.pages.dev) also exists from a manual upload; it does not update on push.
 
 ## Structure
-- `index.html` — hub page listing the games (has an "under maintenance" notice).
+- `index.html` — homepage: animated pixel hero, daily challenge, continue-playing row, game cards (static HTML; has an "under maintenance" notice).
+- `assets/home.js` — homepage only: hero canvas scene, typing tagline, pixel sprites, daily challenge (resets midnight Dhaka time), random game, scroll reveal. Game list is read from the `.card[data-game]` elements, so add a card in HTML and it works everywhere.
+- `assets/alpona.svg` — tile for the alpona dividers.
 - `assets/style.css` — shared theme (dark, Bangladesh green/red, Press Start 2P + Inter).
-- `assets/common.js` — `window.GOB` helpers: best scores in localStorage (`gob:best:<game>`), hi-DPI canvas setup.
+- `assets/common.js` — `window.GOB` helpers: best scores in localStorage (`gob:best:<game>`), `GOB.load/store` (try/catch-wrapped storage), hi-DPI canvas setup. Pages with `<body data-game="<key>">` record `gob:last`.
 - `games/<name>/index.html` — one self-contained page per game: rickshaw-rush, mango-mania, sundarbans-tap, desh-memory.
 - Use relative paths (`../../assets/...`) so pages work at any host.
 
 ## Conventions
 - Games must be original (genre mechanics OK, no clones of named games), mobile-first with touch controls, and keep keyboard support.
-- Adding a game: create `games/<slug>/index.html` from an existing game page, add a card in `index.html` with `data-best="<key>"`.
-- Test locally: `python3 -m http.server 8765` then open http://127.0.0.1:8765/.
+- Adding a game: create `games/<slug>/index.html` from an existing game page (set `data-game` on `<body>`), add a card in `index.html` (`data-game`, `data-name`, `--accent`/`--accent-rgb`, a `data-best` span) and a sprite in `home.js` `SPRITES`.
+- Honour `prefers-reduced-motion` and wrap any localStorage use in try/catch.
+- Test locally: `python -m http.server 8765` then open http://127.0.0.1:8765/.
